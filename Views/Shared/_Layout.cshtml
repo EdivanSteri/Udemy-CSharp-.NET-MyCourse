@@ -1,28 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elenco corsi</title>
-</head>
-<body>   
-    <header>
-        <nav>
-            <ul>
-                <li>Pagina 1</li>
-                <li>Pagina 2</li>
-                <li>Pagina 3</li>
-                <li>Pagina 4</li>
-                <li>Pagina5</li>
-            </ul>
-        </nav>
-    </header>
-    
-    @RenderBody()
-
-    <footer>
-        <p>Contattaci al numero...</p>
-    </footer>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Elenco corsi</title>
+        <!-- CSS only -->
+        <environment include="Development">
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">      
+        </environment>
+        <environment exclude="Development">
+            <!-- CDN LoCALI -->
+        </environment>
+    </head>
+    <body>   
+        <nav class="navbar navbar-expand-md navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"><img src="logo1.png" height="60"></font></font></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Attiva/disattiva la navigazione">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" asp-action="Index" asp-controller="Home">Home</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" asp-action="Index" asp-controller="Courses">Catalogo corsi</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav> 
+        <b-container>
+            @RenderBody()
+        </b-container>
+        <footer>
+            <p>Contattaci al numero...</p>
+        </footer>
+        <!-- JavaScript Bundle with Popper -->
+        <environment include="Development">
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>      
+        </environment>
+        <environment exclude="Development">
+            <!-- script salvati in LOCALE -->
+        </environment>
+    </body>
 </html>
