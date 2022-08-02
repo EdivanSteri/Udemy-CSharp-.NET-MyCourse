@@ -1,15 +1,16 @@
+using MyCourse.Models.Services.Application;
+
 var builder = WebApplication.CreateBuilder(args);
 
 //ConfigureService
 builder.Services.AddMvc(options => options.EnableEndpointRouting = false);
+builder.Services.AddTransient<ICourseService, CourseService>();
 
 var app = builder.Build();
 
-
-
 //Configure Middleware
 if (app.Environment.IsDevelopment())
-{
+{ 
     app.UseDeveloperExceptionPage();
 }
 

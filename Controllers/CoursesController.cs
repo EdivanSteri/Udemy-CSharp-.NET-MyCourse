@@ -9,15 +9,17 @@ using MyCourse.Models.ViewModels;
 namespace MyCourse.Controllers
 {
     public class CoursesController : Controller{
+        private readonly ICourseService courseService;
+        public CoursesController(ICourseService courseServices){
+            this.courseService = courseServices;   
+        }
         public IActionResult Index(){
-            var courseService = new CourseService();
             List<CourseViewModel> courses = courseService.GetCourses();
             ViewData["Title"] = "Catalogo Corsi";
             return View(courses);
         }
 
         public IActionResult Detail(int id){
-            var courseService = new CourseService();
             CourseDetailViewModel viewModel = courseService.GetCourse(id);
             ViewData["Title"] = viewModel.Title;
             return View(viewModel);
