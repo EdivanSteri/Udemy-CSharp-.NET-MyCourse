@@ -1,0 +1,153 @@
+/*Creazione tabella corsi*/
+-- SQLite
+CREATE TABLE Courses (
+    Id                      INTEGER NOT NULL CONSTRAINT PK_Courses PRIMARY KEY AUTOINCREMENT,
+    Title                   TEXT (100) NOT NULL,                     
+    Description             TEXT (10000),
+    ImagePath               TEXT (100),
+    Author                  TEXT (100) NOT NULL,
+    Email                   TEXT (100),
+    Rating                  REAL     NOT NULL DEFAULT (0),
+    FullPrice_Amount        NUMERIC  NOT NULL DEFAULT (0),
+    FullPrice_Currency      TEXT (3) NOT NULL DEFAULT ('EUR'),
+    CurrentyPrice_Amount    NUMERIC  NOT NULL DEFAULT (0),
+    CurrentyPrice_Currency  TEXT (3) NOT NULL DEFAULT ('EUR')
+);
+
+
+/*Inserimento dati nella tabella corsi*/
+-- SQLite
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (1, "C#", "Imparare il Linguaggio C Sharp", "csharp.png", "Mario Rossi", "mariorossi@gmail.com", 5, 19.99, 'EUR', 14.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (2, "Java", "Imparare il Linguaggio Java", "java.png", "Paolo Verde", "paoloverde@gmail.com", 3.5, 9.99, 'EUR', 7.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (3, "C", "Imparare il Linguaggio C", "c.png", "Giacomo Atezni", "giacomoatzeni@gmail.com", 4.75, 14.99, 'EUR', 9.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (4, "C++", "Imparare il Linguaggio C++", "c++.png", "Eugenio Pibiri", "eugeniopibiri@gmail.com", 3.9, 11.99, 'EUR', 8.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (5, "Python", "Imparare il Linguaggio Python", "Python.png", "Edoardo Bonaparte", "edoardobonaparte@gmail.com", 4.0, 14.99, 'EUR', 9.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (6, "WebApplication", "Costruiamo assieme una Web Application ", "webapp.png", "Leonardo Piras", "leonardopiras@gmail.com", 5.4, 19.99, 'EUR', 14.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (7, "Dotnet", "Imparare ad usare il Framework Dotnet", "dotnet.png", "Sara moi", "saramoi@gmail.com", 4.4, 14.99, 'EUR', 9.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (8, "Laravel", "Imparare ad usare il Framework Laravel", "laravel.png", "Elisabetta Murtas", "elisabettamurtas@gmail.com", 4.3, 14.99, 'EUR', 9.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (9, "Springboot", "Imparare ad usare il Framework Springboot", "springboot.png", "Veronica Succu", "veronicasuccu@gmail.com", 2.2, 7.99, 'EUR', 5.99, 'EUR');
+INSERT INTO Courses (Id, Title, Description, ImagePath, Author, Email, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency) VALUES (10, "HTML & CSS", "Imparare ad usare l'HTML & CSS", "html&css.png", "Tommaso Puddu", "tommasopuddu@gmail.com", 3.7, 8.99, 'EUR', 6.99, 'EUR');
+
+
+/*Creazione tabella lezioni*/
+-- SQLite
+CREATE TABLE Lessons (
+    Id                      INTEGER NOT NULL CONSTRAINT PK_Lessons PRIMARY KEY AUTOINCREMENT,
+    CourseId                INTEGER NOT NULL REFERENCES Courses (Id) ON DELETE CASCADE ON UPDATE CASCADE,                     
+    Title                   TEXT (100) NOT NULL,
+    Description             TEXT (1000),
+    Duration                TEXT (8) NOT NULL DEFAULT ('00:00:00:')
+);
+
+
+/*Inserimento dati nella tabella lezioni*/
+-- SQLite
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (1, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(1, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(1, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(1, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(1, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(1, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(1, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(1, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(1, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(1, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (2, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(2, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(2, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(2, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(2, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(2, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(2, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(2, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(2, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(2, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (3, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(3, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(3, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(3, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(3, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(3, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(3, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(3, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(3, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(3, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (4, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(4, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(4, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(4, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(4, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(4, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(4, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(4, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(4, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(4, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (5, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(5, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(5, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(5, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(5, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(5, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(5, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(5, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(5, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(5, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (6, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(6, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(6, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(6, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(6, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(6, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(6, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(6, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(6, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(6, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (7, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(7, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(7, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(7, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(7, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(7, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(7, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(7, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(7, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(7, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (8, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(8, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(8, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(8, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(8, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(8, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(8, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(8, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(8, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(8, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (9, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(9, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(9, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(9, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(9, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(9, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(9, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(9, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(9, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(9, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');
+
+INSERT INTO Lessons (CourseId, Title, Description, Duration) VALUES (10, 'Lezione 1', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(10, 'Lezione 2', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:04:37'),
+(10, 'Lezione 3', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:03:44'),
+(10, 'Lezione 4', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:10:55'),
+(10, 'Lezione 5', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:20:37'),
+(10, 'Lezione 6', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:13:22'),
+(10, 'Lezione 7', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:5:00'),
+(10, 'Lezione 8', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:15:33'),
+(10, 'Lezione 9', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:22:22'),
+(10, 'Lezione 10', 'Descrizione della lezione molto dettagliata e interessante, godetevi il corso al meglio!', '00:55:30');

@@ -1,10 +1,12 @@
 using MyCourse.Models.Services.Application;
+using MyCourse.Models.Services.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //ConfigureService
 builder.Services.AddMvc(options => options.EnableEndpointRouting = false);
-builder.Services.AddTransient<ICourseService, CourseService>();
+builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
+builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 
 var app = builder.Build();
 

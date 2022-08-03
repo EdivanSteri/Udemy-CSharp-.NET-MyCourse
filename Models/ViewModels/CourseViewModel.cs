@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using MyCourse.Models.Enums;
 using MyCourse.Models.ValueTypes;
 
 namespace MyCourse.Models.ViewModels
@@ -19,5 +21,23 @@ namespace MyCourse.Models.ViewModels
 
         public Money CurrentPrice {get; set;}
 
+        public static CourseViewModel FromDataRow(DataRow courseRow){
+            var courseViewModel = new CourseViewModel { 
+                Title = (string) courseRow["Title"],
+                Author = (string) courseRow["Author"],
+                ImagePath = (string) courseRow["ImagePath"],
+                Rating = Convert.ToDouble(courseRow["Rating"]),
+                FullPrice = new Money(
+                    Enum.Parse<Currency>(Convert.ToString(courseRow["FullPrice_Currency"])),
+                    Convert.ToDecimal(courseRow["FullPrice_Amount"])
+                ),
+                CurrentPrice = new Money(
+                    Enum.Parse<Currency>(Convert.ToString(courseRow["CurrentyPrice_Currency"])),
+                    Convert.ToDecimal(courseRow["CurrentyPrice_Amount"])
+                ),
+                Id = Convert.ToInt32(courseRow["Id"])
+            };
+            return courseViewModel;
+        }
     }
 }
