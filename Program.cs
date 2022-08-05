@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using MyCourse.Models.Options;
 using MyCourse.Models.Services.Application;
 using MyCourse.Models.Services.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var builderConfiguration = builder.Configuration;
 
 //ConfigureService
 builder.Services.AddMvc(options => options.EnableEndpointRouting = false);
@@ -14,9 +17,14 @@ builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 //builder.Services.AddDbContext<MyCourseDbContext>();
 builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder =>
 {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-    optionsBuilder.UseSqlite("data Source=Data/MyCourse.db");
+    string configuration = builderConfiguration.GetSection(key:"ConnectionStrings").GetValue<string>("Default");
+    optionsBuilder.UseSqlite(configuration);
 });
+
+//Options
+builder.Services.Configure<ConnectionStringsOptions>(builderConfiguration.GetSection(key: "ConnectionStrings"));
+builder.Services.Configure<CoursesOptions>(builderConfiguration.GetSection(key: "Courses"));
+
 
 var app = builder.Build();
 
