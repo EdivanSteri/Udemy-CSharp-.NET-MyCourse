@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using MyCourse.Models.Entities;
 using MyCourse.Models.Enums;
 using MyCourse.Models.ValueTypes;
 
@@ -36,6 +37,21 @@ namespace MyCourse.Models.ViewModels
                     Convert.ToDecimal(courseRow["CurrentyPrice_Amount"])
                 ),
                 Id = Convert.ToInt32(courseRow["Id"])
+            };
+            return courseViewModel;
+        }
+
+        public static CourseViewModel FromEntity(Course course)
+        {
+            var courseViewModel = new CourseViewModel
+            {
+                Title = course.Title,
+                Author = course.Author,
+                ImagePath = course.ImagePath,
+                Rating =course.Rating,
+                FullPrice =course.FullPrice,
+                CurrentPrice = course.CurrentyPrice,
+                Id =(int) course.Id
             };
             return courseViewModel;
         }
