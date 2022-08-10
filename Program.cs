@@ -35,7 +35,6 @@ builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
 builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder =>
 {
     string connectionString = "Data Source=Data/MyCourse.db";
-;
     optionsBuilder.UseSqlite(connectionString);
 });
 

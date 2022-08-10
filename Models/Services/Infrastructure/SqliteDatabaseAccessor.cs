@@ -31,7 +31,7 @@ namespace MyCourse.Models.Services.Infrastructure{
             }
             string query = formattableQuery.ToString();
 
-            string connectionString = connectionStringsOptions.CurrentValue.Default;
+            string connectionString = "Data Source=Data/MyCourse.db";
             using(var conn = new SqliteConnection(connectionString)){
                 await conn.OpenAsync();
                 using (var cmd = new SqliteCommand(query, conn)){
