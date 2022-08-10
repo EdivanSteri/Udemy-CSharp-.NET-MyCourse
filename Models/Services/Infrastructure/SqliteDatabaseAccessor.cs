@@ -4,11 +4,24 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using MyCourse.Models.Options;
 
 namespace MyCourse.Models.Services.Infrastructure{
     public class SqliteDatabaseAccessor : IDatabaseAccessor{
+        private readonly IOptionsMonitor<ConnectionStringsOptions>  connectionStringsOptions;
+        private readonly ILogger<SqliteDatabaseAccessor> logger;
+
+        public SqliteDatabaseAccessor(ILogger<SqliteDatabaseAccessor> logger, IOptionsMonitor<ConnectionStringsOptions> connectionstringsoptions)
+        {
+            this.connectionStringsOptions = connectionstringsoptions;
+            this.logger = logger;
+        }
         public async Task<DataSet> QueryAsync(FormattableString formattableQuery){
 
+            logger.LogInformation(formattableQuery.Format, formattableQuery.GetArguments());
+
+            //Creiamo dei SqliteParameter a partire dalla FormattableString
             var queryArguments = formattableQuery.GetArguments();
             var sqliteParameters = new List<SqliteParameter>();
             for(var i = 0; i < queryArguments.Length; i++){
@@ -18,14 +31,15 @@ namespace MyCourse.Models.Services.Infrastructure{
             }
             string query = formattableQuery.ToString();
 
-            using(var conn = new SqliteConnection("Data Source=Data/MyCourse.db")){
+            string connectionString = connectionStringsOptions.CurrentValue.Default;
+            using(var conn = new SqliteConnection(connectionString)){
                 await conn.OpenAsync();
                 using (var cmd = new SqliteCommand(query, conn)){
                     cmd.Parameters.AddRange(sqliteParameters);
                     using (var reader = await cmd.ExecuteReaderAsync()){
                         var dataSet = new DataSet();
                         
-                        dataSet.EnforceConstraints = false;
+                        //dataSet.EnforceConstraints = false;
 
                         do{
                             var dataTable = new DataTable();

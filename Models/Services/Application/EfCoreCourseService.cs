@@ -52,13 +52,30 @@ namespace MyCourse.Models.Services.Application
 
         public async Task<List<CourseViewModel>> GetCoursesAsync()
         {
-                IQueryable<CourseViewModel> queryLinq = dbContext.Courses
+            
+            var courses = await dbContext.Courses
+           .AsNoTracking()
+           .ToListAsync();
+
+            var coursesViewModel =(List<CourseViewModel>)courses.Select(course => new CourseViewModel
+            {
+                Id = (int)course.Id,
+                Title = course.Title,
+                ImagePath = course.ImagePath,
+                Author = course.Author,
+                Rating = course.Rating,
+                CurrentPrice = course.CurrentyPrice,
+                FullPrice = course.FullPrice
+            }).ToList();
+           
+            /*
+            IQueryable<CourseViewModel> queryLinq = dbContext.Courses
                 .AsNoTracking()
                 .Select(course => CourseViewModel.FromEntity(course)) ;
 
-                List<CourseViewModel> courses = await queryLinq.ToListAsync();
-
-            return courses;
+                List<CourseViewModel> courses = await queryLinq.ToListAsync();*/
+                
+            return coursesViewModel;
         }
     }
 }

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+	  <UserSecretsId>MyCourse</UserSecretsId>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -14,5 +15,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.7" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.7" />
   </ItemGroup>
 </Project>

@@ -1,22 +1,52 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyCourse.Models.Options;
 using MyCourse.Models.Services.Application;
 using MyCourse.Models.Services.Infrastructure;
 
-var builder = WebApplication.CreateBuilder(args);
+
+
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+var builderConfiguration = builder.Configuration;
+
 
 //ConfigureService
-builder.Services.AddMvc(options => options.EnableEndpointRouting = false);
-//builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
-builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
+
+builder.Services.AddResponseCaching();
+
+builder.Services.AddMvc(options => {
+    options.EnableEndpointRouting = false;
+    var homeProfile = new CacheProfile();
+    //homeProfile.Duration = builder.Configuration.GetValue<int>("ResponseCache:Home:Duration");
+    //homeProfile.Location = builderConfiguration.GetValue<ResponseCacheLocation>("ResponseCache:Home:Location");
+    //homeProfile.VaryByQueryKeys = new string[] { "page" };
+    builderConfiguration.Bind("ResponseCache:Home", homeProfile);
+    options.CacheProfiles.Add("Home", homeProfile);
+
+});
+builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
+//builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
 builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
+builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
 
 //builder.Services.AddScoped<MyCourseDbContext>();
 //builder.Services.AddDbContext<MyCourseDbContext>();
 builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder =>
 {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-    optionsBuilder.UseSqlite("data Source=Data/MyCourse.db");
+    string connectionString = "Data Source=Data/MyCourse.db";
+;
+    optionsBuilder.UseSqlite(connectionString);
 });
+
+//options
+builder.Services.Configure<ConnectionStringsOptions>(builderConfiguration.GetSection("ConnectionStrings"));
+builder.Services.Configure<CoursesOptions>(builderConfiguration.GetSection("Courses"));
+builder.Services.Configure<MemoryCacheOptions>(builderConfiguration.GetSection("MemoryCache"));
+
+
+
+
 
 var app = builder.Build();
 
@@ -24,6 +54,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 { 
     app.UseDeveloperExceptionPage();
+}else{
+    app.UseExceptionHandler("/Error");
 }
 
 if (app.Environment.IsProduction())
@@ -34,6 +66,9 @@ if (app.Environment.IsProduction())
 
 app.UseStaticFiles();
 app.UseRouting();
+
+
+app.UseResponseCaching();
 
 //app.UseMvcWithDefaultRoute(); 
 app.UseMvc(routeBuilder =>

@@ -9,8 +9,8 @@ using MyCourse.Models.ViewModels;
 namespace MyCourse.Controllers
 {
     public class CoursesController : Controller{
-        private readonly ICourseService courseService;
-        public CoursesController(ICourseService courseServices){
+        private readonly ICachedCourseService courseService;
+        public CoursesController(ICachedCourseService courseServices){
             this.courseService = courseServices;   
         }
         public async Task<IActionResult> Index(){

@@ -22,6 +22,8 @@ namespace MyCourse.Models.ViewModels
 
         public Money CurrentPrice {get; set;}
 
+        public Lesson Lesson {get; set;}
+
         public static CourseViewModel FromDataRow(DataRow courseRow){
             var courseViewModel = new CourseViewModel { 
                 Title = (string) courseRow["Title"],
@@ -48,10 +50,11 @@ namespace MyCourse.Models.ViewModels
                 Title = course.Title,
                 Author = course.Author,
                 ImagePath = course.ImagePath,
-                Rating =course.Rating,
-                FullPrice =course.FullPrice,
+                Rating = course.Rating,
+                FullPrice = course.FullPrice,
                 CurrentPrice = course.CurrentyPrice,
-                Id =(int) course.Id
+                Id = (int)course.Id,
+                Lesson = (Lesson) course.Lessons
             };
             return courseViewModel;
         }
