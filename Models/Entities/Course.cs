@@ -18,7 +18,7 @@ namespace MyCourse.Models.Entities
             Title = title;
             Author = author;
 
-            Lessons = new HashSet<Lesson>();
+            Lessons = new List<Lesson>();
         }
 
         public long Id { get; private set; }

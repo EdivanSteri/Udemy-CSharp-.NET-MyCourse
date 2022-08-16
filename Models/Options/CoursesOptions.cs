@@ -1,12 +1,13 @@
 ﻿namespace MyCourse.Models.Options
 {
-    public class CoursesOptions
+    public partial class CoursesOptions
     {
         public string PerPage { get; set; }
+        public int InHome { get; set; }
         public CoursesOrderOptions Order { get; set; }
     }
 
-    public class CoursesOrderOptions
+    public partial class CoursesOrderOptions
     {
         public string By { get; set; }
         public bool Ascending { get; set; }

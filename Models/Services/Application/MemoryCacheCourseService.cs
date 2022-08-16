@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using MyCourse.Models.InputModels;
 using MyCourse.Models.ViewModels;
 
 namespace MyCourse.Models.Services.Application
@@ -24,13 +25,36 @@ namespace MyCourse.Models.Services.Application
             });
         }
 
-        public Task<List<CourseViewModel>> GetCoursesAsync()
+        public Task<ListViewModel<CourseViewModel>> GetCoursesAsync(CourseListInputModel model)
         {
-            return memoryCache.GetOrCreateAsync("Course", cacheEntry =>
+            bool canCache = model.Page <= 5 && string.IsNullOrEmpty(model.Search);
+            if (canCache)
             {
-                cacheEntry.SetSize(1);
+                return memoryCache.GetOrCreateAsync($"Course{model.Search}-{model.Page}-{model.OrderBy}-{model.Ascending}", cacheEntry =>
+                {
+                    cacheEntry.SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+                    return courseService.GetCoursesAsync(model);
+                });
+            }
+
+            return courseService.GetCoursesAsync(model);
+        }
+
+        public  Task<List<CourseViewModel>> GetBestRatingCoursesAsync()
+        {
+            return memoryCache.GetOrCreateAsync($"BestRatingCourses", cacheEntry =>
+            {
                 cacheEntry.SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
-                return courseService.GetCoursesAsync();
+                return courseService.GetBestRatingCoursesAsync();
+            });
+        }
+
+        public Task<List<CourseViewModel>> GetMostRecentCoursesAsync()
+        {
+            return memoryCache.GetOrCreateAsync($"MostRecentCourses", cacheEntry =>
+            {
+                cacheEntry.SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+                return courseService.GetMostRecentCoursesAsync();
             });
         }
     }

@@ -22,7 +22,7 @@ namespace MyCourse.Models.ViewModels
 
         public Money CurrentPrice {get; set;}
 
-        public Lesson Lesson {get; set;}
+        public List<Lesson> Lesson {get; set;}
 
         public static CourseViewModel FromDataRow(DataRow courseRow){
             var courseViewModel = new CourseViewModel { 
@@ -54,7 +54,7 @@ namespace MyCourse.Models.ViewModels
                 FullPrice = course.FullPrice,
                 CurrentPrice = course.CurrentyPrice,
                 Id = (int)course.Id,
-                Lesson = (Lesson) course.Lessons
+                Lesson = (List<Lesson>)course.Lessons
             };
             return courseViewModel;
         }

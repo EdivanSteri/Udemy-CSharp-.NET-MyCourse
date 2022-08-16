@@ -25,8 +25,8 @@ builder.Services.AddMvc(options => {
     options.CacheProfiles.Add("Home", homeProfile);
 
 });
-builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
-//builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
+//builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
+builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
 builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
 
