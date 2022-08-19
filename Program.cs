@@ -16,7 +16,7 @@ var builderConfiguration = builder.Configuration;
 builder.Services.AddResponseCaching();
 
 builder.Services.AddMvc(options => {
-    options.EnableEndpointRouting = false;
+    //options.EnableEndpointRouting = false;
     var homeProfile = new CacheProfile();
     //homeProfile.Duration = builder.Configuration.GetValue<int>("ResponseCache:Home:Duration");
     //homeProfile.Location = builderConfiguration.GetValue<ResponseCacheLocation>("ResponseCache:Home:Location");
@@ -69,11 +69,15 @@ app.UseRouting();
 
 app.UseResponseCaching();
 
+app.UseEndpoints(routeBuilder =>
+{
+    routeBuilder.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+});
 //app.UseMvcWithDefaultRoute(); 
-app.UseMvc(routeBuilder =>
+/*app.UseMvc(routeBuilder =>
 {
     routeBuilder.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
-});
+});*/
 
 app.Run();
 

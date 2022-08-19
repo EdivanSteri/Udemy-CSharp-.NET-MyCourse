@@ -17,8 +17,10 @@ namespace MyCourse.Models.Entities
 
             Title = title;
             Author = author;
-
             Lessons = new List<Lesson>();
+            CurrentyPrice = new Money(Enums.Currency.EUR, 0);
+            FullPrice = new Money(Enums.Currency.EUR, 0);
+            ImagePath = "/Courses/deault.png";
         }
 
         public long Id { get; private set; }

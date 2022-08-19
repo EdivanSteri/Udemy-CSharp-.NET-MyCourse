@@ -43,9 +43,9 @@ namespace MyCourse.Models.ViewModels
             return courseViewModel;
         }
 
-        public static CourseViewModel FromEntity(Course course)
+        public static CourseDetailViewModel FromEntity(Course course)
         {
-            var courseViewModel = new CourseViewModel
+            var courseViewModel = new CourseDetailViewModel
             {
                 Title = course.Title,
                 Author = course.Author,

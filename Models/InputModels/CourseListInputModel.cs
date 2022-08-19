@@ -8,6 +8,7 @@ namespace MyCourse.Models.InputModels
     public class CourseListInputModel
     {
         private CoursesOrderOptions orderOptions;
+        private CoursesOrderOptions ordersOptions;
 
         public CourseListInputModel(string search, int page, string orderby, bool ascending, CoursesOptions courseOptions)
         {
@@ -27,6 +28,16 @@ namespace MyCourse.Models.InputModels
 
             Limit = Convert.ToInt32(courseOptions.PerPage);
             Offset = (Page - 1) * Limit;
+        }
+
+        public CourseListInputModel(string search, int page, string orderby, bool ascending, int limit, CoursesOrderOptions ordersOptions)
+        {
+            Search = search;
+            Page = page;
+            OrderBy = orderby;
+            Ascending = ascending;
+            Limit = limit;
+            this.orderOptions = orderOptions;
         }
 
         public string Search { get; }

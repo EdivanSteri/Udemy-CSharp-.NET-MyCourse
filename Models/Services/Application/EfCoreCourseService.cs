@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MyCourse.Models.Entities;
+using MyCourse.Models.Exceptions;
 using MyCourse.Models.InputModels;
 using MyCourse.Models.Options;
 using MyCourse.Models.Services.Infrastructure;
@@ -85,7 +89,7 @@ namespace MyCourse.Models.Services.Application
                         baseQuery = baseQuery.OrderByDescending(course => course.Rating);
                     }
                     break;
-                case "CurrentyPrice":
+                case "CurrentPrice":
                     if (model.Ascending)
                     {
                         baseQuery = baseQuery.OrderBy(course => course.CurrentyPrice.Amount);
@@ -104,7 +108,7 @@ namespace MyCourse.Models.Services.Application
                 .Select(course => CourseViewModel.FromEntity(course));
 
             List<CourseViewModel> courses =  await  queryLinq
-                 .Skip(model.Offset)
+                .Skip(model.Offset)
                 .Take(model.Limit)
                 .ToListAsync();
 
@@ -127,7 +131,7 @@ namespace MyCourse.Models.Services.Application
                 orderby: "Id",
                 ascending: false,
                 limit: coursesOptions.CurrentValue.InHome,
-                orderOptions: coursesOptions.CurrentValue.Order);
+                ordersOptions: coursesOptions.CurrentValue.Order);
 
             ListViewModel<CourseViewModel> result = await GetCoursesAsync(inputModel);
             return result.Results;
@@ -141,10 +145,36 @@ namespace MyCourse.Models.Services.Application
                 orderby: "Rating",
                 ascending: false,
                 limit: coursesOptions.CurrentValue.InHome,
-                orderOptions: coursesOptions.CurrentValue.Order);
+                ordersOptions: coursesOptions.CurrentValue.Order);
 
             ListViewModel<CourseViewModel> result = await GetCoursesAsync(inputModel);
             return result.Results;
+        }
+        public async Task<CourseDetailViewModel> CreateCourseAsync(CourseCreateInputModel inputModel)
+        {
+            string title = inputModel.Title;
+            string author = "Edivan Steri";
+
+
+            Course course = new(title, author);
+            dbContext.Add(course);
+            try
+            {
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException exc) when ((exc.InnerException as SqliteException)?.SqliteErrorCode == 19)
+            {
+                throw new CourseTitleUnavailableException(title, exc);
+            }
+
+            return CourseDetailViewModel.FromEntity(course);
+        }
+
+        public async Task<bool> IsTitleAvailableAsync(string title)
+        {
+            //await dbContext.Courses.AnyAsync(course => course.Title == title);
+            bool titleExists = await dbContext.Courses.AnyAsync(course => EF.Functions.Like(course.Title, title));
+            return !titleExists;
         }
     }
 }

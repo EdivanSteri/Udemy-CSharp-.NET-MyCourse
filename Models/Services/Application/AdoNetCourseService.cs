@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Options;
 using MyCourse.Models.Exceptions;
 using MyCourse.Models.InputModels;
@@ -31,7 +32,7 @@ namespace MyCourse.Models.Services.Application
 
             logger.LogInformation("Course {id} requested", id);
 
-            FormattableString query = $@"SELECT Id, Title, Description, ImagePath, Author, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency FROM Courses Where Id={id}
+            FormattableString query = $@"SELECT Id, Title, Description, ImagePath, Author, Rating, FullPrice_Amount, FullPrice_Currency, CurrentPrice_Amount, CurrentPrice_Currency FROM Courses Where Id={id}
             ; SELECT Id, Title, Description, Duration FROM Lessons WHERE CourseId={id}";
 
             DataSet dataSet = await db.QueryAsync(query);
@@ -61,7 +62,7 @@ namespace MyCourse.Models.Services.Application
             
             string direction = model.Ascending ? "ASC" : "DESC";
 
-            FormattableString query = $@"SELECT Id, Title, ImagePath, Author, Rating, FullPrice_Amount, FullPrice_Currency, CurrentyPrice_Amount, CurrentyPrice_Currency FROM Courses WHERE Title LIKE {"%" + model.Search + "%"} ORDER BY {model.OrderBy} {direction} LIMIT {model.Limit} OFFSET {model.Offset};
+            FormattableString query = $@"SELECT Id, Title, ImagePath, Author, Rating, FullPrice_Amount, FullPrice_Currency, CurrentPrice_Amount, CurrentPrice_Currency FROM Courses WHERE Title LIKE {"%" + model.Search + "%"} ORDER BY {model.OrderBy} {direction} LIMIT {model.Limit} OFFSET {model.Offset};
                                          SELECT COUNT (*) FROM Courses Where Title LIKE {"%"+model.Search + "%"}";
             DataSet dataSet = await db.QueryAsync(query);
             var dataTable = dataSet.Tables[0];
@@ -106,6 +107,34 @@ namespace MyCourse.Models.Services.Application
 
             ListViewModel<CourseViewModel> result = await GetCoursesAsync(inputModel);
             return result.Results;
+        }
+
+        public async Task<CourseDetailViewModel> CreateCourseAsync(CourseCreateInputModel inputModel)
+        {
+            string title = inputModel.Title;
+            string author = "Edivan Steri";
+
+            try
+            {
+                DataSet dataSet = await db.QueryAsync($@"INSERT INTO Courses (Title, Author, ImagePath, CurrentPrice_Currency, FullPrice_Currency, CurrentPrice_Amount, FullPrice_Amount) VALUES ({title}, {author}, '/Courses/deault.png', 'EUR', 0, 'EUR'. 0);
+                                                 SELECT last_insert_rowid();");
+
+                int courseId = Convert.ToInt32(dataSet.Tables[0].Rows[0][0]);
+                CourseDetailViewModel course = await GetCourseAsync(courseId);
+
+                return course;
+            }
+            catch (SqliteException exc) when (exc.SqliteErrorCode == 19)
+            {
+                throw new CourseTitleUnavailableException(title, exc);
+            }
+        }
+
+        public async Task<bool> IsTitleAvailableAsync(string title)
+        {
+            DataSet result = await db.QueryAsync($"SELECT COUNT(*) FROM Courses WHERE Title LIKE {title}");
+            bool titleAvalaible = Convert.ToInt32(result.Tables[0].Rows[0][0]) == 0;
+            return titleAvalaible;
         }
     }
 }
