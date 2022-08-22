@@ -52,7 +52,7 @@ namespace MyCourse.Models.ViewModels
                 ImagePath = course.ImagePath,
                 Rating = course.Rating,
                 FullPrice = course.FullPrice,
-                CurrentPrice = course.CurrentyPrice,
+                CurrentPrice = course.CurrentPrice,
                 Id = (int)course.Id,
                 Lesson = (List<Lesson>)course.Lessons
             };

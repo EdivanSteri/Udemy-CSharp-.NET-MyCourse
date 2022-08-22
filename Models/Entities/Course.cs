@@ -18,20 +18,22 @@ namespace MyCourse.Models.Entities
             Title = title;
             Author = author;
             Lessons = new List<Lesson>();
-            CurrentyPrice = new Money(Enums.Currency.EUR, 0);
+            CurrentPrice = new Money(Enums.Currency.EUR, 0);
             FullPrice = new Money(Enums.Currency.EUR, 0);
             ImagePath = "/Courses/deault.png";
         }
 
-        public long Id { get; private set; }
-        public string Title { get; private set; } = null!;
-        public string? Description { get; private set; }
-        public string? ImagePath { get; private set; }
-        public string Author { get; private set; } = null!;
-        public string? Email { get; private set; }
+        public int Id { get; private set; }
+        public string Title { get; private set; }
+        public string Description { get; private set; }
+        public string ImagePath { get; private set; }
+        public string Author { get; set; }
+        public string Email { get; private set; }
         public double Rating { get; private set; }
-        public Money FullPrice { get; private set; } = null!;
-        public Money CurrentyPrice { get; private set; } = null!;
+        public Money FullPrice { get; private set; }
+        public Money CurrentPrice { get; private set; }
+        public virtual ICollection<Lesson> Lessons { get; private set; }
+
 
         public void ChangeTitle(string newTitle){
             if(string.IsNullOrWhiteSpace(newTitle)){
@@ -40,20 +42,63 @@ namespace MyCourse.Models.Entities
             Title = newTitle;
         }
 
-        public void ChangePrices(Money newFullPrice, Money newDiscountPrice){
-            if(newFullPrice == null || newDiscountPrice == null){
+        public void ChangePrices(Money newFullPrice, Money newCurrentPrice)
+        {
+            if (newFullPrice == null || newCurrentPrice == null)
+            {
                 throw new ArgumentException("Prices can't be null");
             }
-            if(newFullPrice.Currency != newDiscountPrice.Currency){
-                throw new ArgumentException("Currency don't match");
+            if (newFullPrice.Currency != newCurrentPrice.Currency)
+            {
+                throw new ArgumentException("Currencies don't match");
             }
-            if(newFullPrice.Amount < newDiscountPrice.Amount){
+            if (newFullPrice.Amount < newCurrentPrice.Amount)
+            {
                 throw new ArgumentException("Full price can't be less than the current price");
             }
             FullPrice = newFullPrice;
-            CurrentyPrice = newDiscountPrice;         
+            CurrentPrice = newCurrentPrice;
         }
 
-        public virtual ICollection<Lesson> Lessons { get; private set; }
+        public void ChangeEmail(string newEmail)
+        {
+            if (string.IsNullOrEmpty(newEmail))
+            {
+                throw new ArgumentException("Email can't be empty");
+            }
+            Email = newEmail;
+        }
+
+        public void ChangeDescription(string newDescription)
+        {
+            if (newDescription != null)
+            {
+                if (newDescription.Length < 20)
+                {
+                    throw new Exception("Description is too short");
+                }
+                else if (newDescription.Length > 4000)
+                {
+                    throw new Exception("Description is too long");
+                }
+            }
+            Description = newDescription;
+        }
+
+        public void ChangeImagePath(string imagePath)
+        {
+            ImagePath = imagePath;
+        }
+
+        public void ChangeRating(double? rating)
+        {
+            if (rating == null)
+            {
+                return;
+            }
+
+            Rating = rating ?? 0;
+        }
+
     }
 }

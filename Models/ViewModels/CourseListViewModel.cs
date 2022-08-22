@@ -1,4 +1,4 @@
-﻿using MyCourse.Models.InputModels;
+﻿using MyCourse.Models.InputModels.Courses;
 
 namespace MyCourse.Models.ViewModels
 {

@@ -26,7 +26,7 @@ namespace MyCourse.Models.Services.Infrastructure
 
 
                 //Mapping per gli owned type
-                entity.OwnsOne(course => course.CurrentyPrice, builder =>{
+                entity.OwnsOne(course => course.CurrentPrice, builder =>{
                     builder.Property(money => money.Currency)
                     .HasConversion<string>()
                     .HasColumnName("CurrentPrice_Currency"); //questo è superfluo perchè le nostre colonne seguono già la convenzione dei nomi

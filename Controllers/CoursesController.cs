@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using MyCourse.Models.Exceptions;
-using MyCourse.Models.InputModels;
+using MyCourse.Models.InputModels.Courses;
 using MyCourse.Models.Services.Application;
 using MyCourse.Models.ViewModels;
 
@@ -63,10 +63,38 @@ namespace MyCourse.Controllers
             return View(inputModel);
         }
 
-        public async Task<IActionResult> IsTitleAvailable(string title)
+        public async Task<IActionResult> IsTitleAvailable(string title, int id=0)
         {
-            bool result = await courseService.IsTitleAvailableAsync(title);
+            bool result = await courseService.IsTitleAvailableAsync(title, id);
             return Json(result);
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            ViewData["Title"] = "Modifica Corso";
+            CourseEditInputModel inputNodel = await courseService.GetCourseForEditingAsync(id);
+            return View(inputNodel);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(CourseEditInputModel inputModel)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    CourseDetailViewModel course = await courseService.EditCourseAsync(inputModel);
+                    TempData["ConfirmationMessage"] = "I dati sono stati salvati con successo";
+                    return RedirectToAction(nameof(Detail), new {id= inputModel.Id});
+                }
+                catch (CourseTitleUnavailableException)
+                {
+                    ModelState.AddModelError(nameof(CourseDetailViewModel.Title), "Questo titolo già esiste");
+                }
+            }
+
+            ViewData["Title"] = "Modifica Corso";
+            return View(inputModel);
         }
     }  
 

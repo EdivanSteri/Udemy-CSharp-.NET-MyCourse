@@ -2,51 +2,53 @@
 <section class="course-info">
     <div class="row">
         <div class="col-md-9">
-            <h1>@Model.Title</h1>
+            <h1>@Model.Title
+                <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@Model.Id"><i class="fas fa-pencil-alt"></i> Modifica</a>
+            </h1>
         </div>
         <div class="col-md-3 d-flex align-items-end">
-            <a class="btn btn-warning btn-lg btn-block subscribe-course" href="#">Iscriviti</a>
+            <a class="btn btn-warning btn-lg btn-block subscribe-course" asp-action="Pay" asp-route-id="@Model.Id">Iscriviti</a>
         </div>
     </div>
     <div class="row">
-        <div class="col-md-9" html-sanitize>
-            <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Laboriosam facilis totam sed, ducimus sit, non earum quasi rerum atque asperiores iure quia voluptatem aut sint suscipit aspernatur optio? Perspiciatis, sapiente?</p>
-            <p>Temporibus esse ducimus eaque minus dolorum vel nobis aliquid labore possimus accusantium, mollitia quod maiores velit aut dolore facere deleniti! Vero dolore temporibus reprehenderit harum quos quia aperiam ipsa suscipit?</p>
-            <p>Itaque, velit soluta rem officiis accusantium, laudantium voluptatum cum dicta nulla ipsam ipsum esse eos id blanditiis impedit vel praesentium similique dolore quos beatae magni vitae. Velit quis eos sequi!</p>
-            <p>Fugiat, vitae necessitatibus! Molestiae, recusandae fuga modi amet officiis reprehenderit quibusdam dolorem veniam fugiat! Delectus eaque, placeat laborum, nihil vero at eligendi, labore molestiae quidem vitae et. Nemo, officiis aperiam?</p>
+        <div class="col-md-9">
+            <p html-sanitize>@Model.Description</p>
         </div>
         <div class="col-md-3">
             <aside>
                 <author>di @Model.Author</author>
                 <div class="rating" title="@Model.Rating">
-                    <rating value="@Model.Rating"></rating>   
+                    <rating value="@Model.Rating"></rating>
                 </div>
                 <div class="price">
                     <price current-price="@Model.CurrentPrice" full-price="@Model.FullPrice"></price>
                 </div>
-                <img src="/@Model.ImagePath" class="img-fluid course-image" alt="@Model.Title" asp-append-version="true">
+                <img src="@Model.ImagePath" class="img-fluid course-image" alt="@Model.Title" asp-append-version="true">
             </aside>
         </div>
     </div>
 </section>
 
 <section class="course-lessons">
-	<h2>Lezioni (@Model.Lessons.Count)</h2>
-	@foreach (var lesson in Model.Lessons)
-	{
+    <h2>Lezioni (@Model.Lesson.Count)
+        <a class="btn btn-outline-primary btn-sm" asp-controller="Lessons" asp-action="Create" asp-route-id="@Model.Id"><i class="fas fa-plus"></i> Crea nuova</a>
+    </h2>
+    @foreach (var lesson in Model.Lesson)
+    {
         <hr>
         <div class="row">
-            <div class="col-md-9 d-flex align-items-center">    
-                <a href="#">@lesson.Title</a>  
+            <div class="col-md-9 d-flex align-items-center">
+                <span>@lesson.Title</span>
             </div>
             <div class="col-md-3 d-flex align-items-center justify-content-end lesson-duration">
                 <i class="far fa-clock"></i><time>@lesson.Duration.ToString("m'm 's's'")</time>
+                <a class="btn btn-outline-primary btn-sm ml-3" asp-controller="Lessons" asp-action="Edit" asp-route-id="@lesson.Id"><i class="fas fa-pencil-alt"></i></a>
             </div>
         </div>
-	}
+    }
     <hr>
     <div class="row course-duration">
-		<div class="col-md-9 d-flex align-items-center">
+        <div class="col-md-9 d-flex align-items-center">
             Totale
         </div>
         <div class="col-md-3 d-flex align-items-center justify-content-end">
@@ -54,3 +56,11 @@
         </div>
     </div>
 </section>
+@section Scripts
+    {
+    <script>
+      $('#voteModal').on('shown.bs.modal', function(event) {
+          $(this).find('iframe').attr('src', event.relatedTarget.href);
+      });
+    </script>
+}

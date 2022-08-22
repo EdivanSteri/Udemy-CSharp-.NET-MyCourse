@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
-using MyCourse.Models.InputModels;
+using MyCourse.Models.InputModels.Courses;
 using MyCourse.Models.Options;
 
 namespace MyCourse.Customizations.ModelBinders
@@ -18,15 +18,17 @@ namespace MyCourse.Customizations.ModelBinders
         {
             //Recuperiamo i valori grazie ai value provider
             string search = bindingContext.ValueProvider.GetValue("Search").FirstValue;
-            int page = Convert.ToInt32(bindingContext.ValueProvider.GetValue("Page").FirstValue);
             string orderBy = bindingContext.ValueProvider.GetValue("OrderBy").FirstValue;
-            bool ascending = Convert.ToBoolean(bindingContext.ValueProvider.GetValue("Ascending").FirstValue);
+            int.TryParse(bindingContext.ValueProvider.GetValue("Page").FirstValue, out int page);
+            bool.TryParse(bindingContext.ValueProvider.GetValue("Ascending").FirstValue, out bool ascending);
 
             //Creiamo l'istanza del CourseListInputModel
-            var inputModel = new CourseListInputModel(search, page, orderBy, ascending, coursesOptions.CurrentValue);
-                
-            //Impostiaamo il risultato per notificare che la creazione è avvenuta con successo    
-                bindingContext.Result =  ModelBindingResult.Success(inputModel);
+            CoursesOptions options = coursesOptions.CurrentValue;
+            var optionsPerPage = Convert.ToInt32(options.PerPage);
+            CourseListInputModel inputModel = new(search, page, orderBy, ascending, optionsPerPage, options.Order);
+
+            //Impostiamo il risultato per notificare che la creazione è avvenuta con successo
+            bindingContext.Result = ModelBindingResult.Success(inputModel);
 
             //Restituiamo un task completato
             return Task.CompletedTask;

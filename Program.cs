@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using MyCourse.Models.Options;
 using MyCourse.Models.Services.Application;
@@ -29,6 +30,7 @@ builder.Services.AddMvc(options => {
 builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
 builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
+builder.Services.AddSingleton<IImagePersister, MagickNetImagePersister>();
 
 //builder.Services.AddScoped<MyCourseDbContext>();
 //builder.Services.AddDbContext<MyCourseDbContext>();
@@ -42,6 +44,7 @@ builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder =>
 builder.Services.Configure<ConnectionStringsOptions>(builderConfiguration.GetSection("ConnectionStrings"));
 builder.Services.Configure<CoursesOptions>(builderConfiguration.GetSection("Courses"));
 builder.Services.Configure<MemoryCacheOptions>(builderConfiguration.GetSection("MemoryCache"));
+builder.Services.Configure<KestrelServerOptions>(builderConfiguration.GetSection("Kestrel"));
 
 
 
@@ -64,6 +67,15 @@ if (app.Environment.IsProduction())
 
 
 app.UseStaticFiles();
+
+//Nel caso volessi impostare una Culture specifica...
+/*var appCulture = CultureInfo.InvariantCulture;
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(appCulture),
+    SupportedCultures = new[] { appCulture }
+});*/
+
 app.UseRouting();
 
 
