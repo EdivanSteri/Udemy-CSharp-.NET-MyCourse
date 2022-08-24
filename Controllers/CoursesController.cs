@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using MyCourse.Models.Exceptions;
 using MyCourse.Models.InputModels.Courses;
-using MyCourse.Models.Services.Application;
+using MyCourse.Models.Services.Application.Courses;
 using MyCourse.Models.ViewModels;
+using MyCourse.Models.ViewModels.Courses;
 
 namespace MyCourse.Controllers
 {
@@ -87,9 +88,17 @@ namespace MyCourse.Controllers
                     TempData["ConfirmationMessage"] = "I dati sono stati salvati con successo";
                     return RedirectToAction(nameof(Detail), new {id= inputModel.Id});
                 }
+                catch (CourseImageInvalidException)
+                {
+                    ModelState.AddModelError(nameof(CourseEditInputModel.Image), "L'immagine selezionata non è valida");
+                }
                 catch (CourseTitleUnavailableException)
                 {
-                    ModelState.AddModelError(nameof(CourseDetailViewModel.Title), "Questo titolo già esiste");
+                    ModelState.AddModelError(nameof(CourseEditInputModel.Title), "Questo titolo già esiste");
+                }
+                catch (OptimisticConcurrencyException)
+                {
+                    ModelState.AddModelError("", "Spiacenti, il salvataggio non è andato a buon fine perché nel frattempo un altro utente ha aggiornato il corso. Ti preghiamo di aggiornare la pagina e ripetere le modifiche.");
                 }
             }
 

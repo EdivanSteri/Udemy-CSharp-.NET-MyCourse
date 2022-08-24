@@ -15,11 +15,15 @@
     <PackageReference Include="HtmlSanitizer" Version="7.1.542" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="7.15.4" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.7" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\InputModels\lessons\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 </Project>

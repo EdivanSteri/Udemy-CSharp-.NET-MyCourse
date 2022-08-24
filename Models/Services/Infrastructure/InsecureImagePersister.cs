@@ -2,7 +2,6 @@
 {
     public class InsecureImagePersister : IImagePersister
     {
-
         private readonly IWebHostEnvironment env;
 
         public InsecureImagePersister(IWebHostEnvironment env)

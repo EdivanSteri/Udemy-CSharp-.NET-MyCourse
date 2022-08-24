@@ -34,6 +34,5 @@ namespace MyCourse.Customizations.TagHelpers
                 output.PostContent.SetHtmlContent($" <i class=\"fas fa-caret-{direction}\"></i>");
             }
         }
-        
     }
 }

@@ -8,12 +8,10 @@ namespace MyCourse.Customizations.ModelBinders
     public class CourseListInputModelBinder : IModelBinder
     {
         private readonly IOptionsMonitor<CoursesOptions> coursesOptions;
-
         public CourseListInputModelBinder(IOptionsMonitor<CoursesOptions> coursesOptions)
         {
             this.coursesOptions = coursesOptions;
         }
-
         public Task BindModelAsync(ModelBindingContext bindingContext)
         {
             //Recuperiamo i valori grazie ai value provider
@@ -24,8 +22,7 @@ namespace MyCourse.Customizations.ModelBinders
 
             //Creiamo l'istanza del CourseListInputModel
             CoursesOptions options = coursesOptions.CurrentValue;
-            var optionsPerPage = Convert.ToInt32(options.PerPage);
-            CourseListInputModel inputModel = new(search, page, orderBy, ascending, optionsPerPage, options.Order);
+            var inputModel = new CourseListInputModel(search, page, orderBy, ascending, options.PerPage, options.Order);
 
             //Impostiamo il risultato per notificare che la creazione è avvenuta con successo
             bindingContext.Result = ModelBindingResult.Success(inputModel);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using MyCourse.Models.Entities;
+using MyCourse.Models.Enums;
 
 namespace MyCourse.Models.Services.Infrastructure
 {
@@ -13,31 +14,38 @@ namespace MyCourse.Models.Services.Infrastructure
         {
         }
 
-        public virtual DbSet<Course> Courses { get; set; } = null!;
-        public virtual DbSet<Lesson> Lessons { get; set; } = null!;
+        public virtual DbSet<Course> Courses { get; set; }
+        public virtual DbSet<Lesson> Lessons { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasAnnotation("ProductVersion", "2.2.4-servicing-10062");
+
             modelBuilder.Entity<Course>(entity =>
             {
-                entity.ToTable("Courses");
+                entity.ToTable("Courses"); //Superfluo se la tabella si chiama come la proprietà che espone il DbSet
                 entity.HasKey(course => course.Id); //Superfluo se la proprietà si chiama Id oppure CourseId
-                //entity.HasKey(course => new {course.Id, course.Author }); caso in cui si ha più di una primary key
+                //entity.HasKey(course => new { course.Id, course.Author }); //Per chiavi primarie composite (è importante rispettare l'ordine dei campi)
 
+                entity.HasIndex(course => course.Title).IsUnique();
+                entity.Property(course => course.RowVersion).IsRowVersion();
+                entity.Property(course => course.Status).HasConversion<string>();
 
-                //Mapping per gli owned type
-                entity.OwnsOne(course => course.CurrentPrice, builder =>{
+                //Mapping per gli owned types
+                entity.OwnsOne(course => course.CurrentPrice, builder => {
                     builder.Property(money => money.Currency)
-                    .HasConversion<string>()
-                    .HasColumnName("CurrentPrice_Currency"); //questo è superfluo perchè le nostre colonne seguono già la convenzione dei nomi
-                    
+                           .HasConversion<string>()
+                           .HasColumnName("CurrentPrice_Currency"); //Superfluo perché le nostre colonne seguono già la convenzione di nomi
                     builder.Property(money => money.Amount)
-                     .HasConversion<float>()
-                     .HasColumnName("CurrentPrice_Amount"); //questo è superfluo perchè le nostre colonne seguono già la convenzione dei nomi
+                           .HasColumnName("CurrentPrice_Amount")//Superfluo perché le nostre colonne seguono già la convenzione di nomi
+                           .HasConversion<float>(); //Questo indica al meccanismo delle migration che la colonna della tabella dovrà essere creata di tipo numerico
                 });
 
-                entity.OwnsOne(course => course.FullPrice, builder =>{
-                    builder.Property(money => money.Currency).HasConversion<string>();
+                entity.OwnsOne(course => course.FullPrice, builder => {
+                    builder.Property(money => money.Currency)
+                           .HasConversion<string>();
+                    builder.Property(money => money.Amount)
+                           .HasConversion<float>(); //Questo indica al meccanismo delle migration che la colonna della tabella dovrà essere creata di tipo numerico
                 });
 
                 //Mapping per le relazioni
@@ -45,68 +53,67 @@ namespace MyCourse.Models.Services.Infrastructure
                       .WithOne(lesson => lesson.Course)
                       .HasForeignKey(lesson => lesson.CourseId); //Superflua se la proprietà si chiama CourseId
 
+                //Global Query Filter
+                entity.HasQueryFilter(course => course.Status != CourseStatus.Deleted);
+
                 #region Mapping generato automaticamente dal tool di reverse engineering
                 /*
-                entity.Property(e => e.Author).HasColumnType("TEXT (100)");
-
-                entity.Property(e => e.CurrentyPriceAmount)
+                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Author)
+                    .IsRequired()
+                    .HasColumnType("TEXT (100)");
+                entity.Property(e => e.CurrentPriceAmount)
+                    .IsRequired()
+                    .HasColumnName("CurrentPrice_Amount")
                     .HasColumnType("NUMERIC")
-                    .HasColumnName("CurrentyPrice_Amount")
                     .HasDefaultValueSql("0");
-
-                entity.Property(e => e.CurrentyPriceCurrency)
+                entity.Property(e => e.CurrentPriceCurrency)
+                    .IsRequired()
+                    .HasColumnName("CurrentPrice_Currency")
                     .HasColumnType("TEXT (3)")
-                    .HasColumnName("CurrentyPrice_Currency")
                     .HasDefaultValueSql("'EUR'");
-
                 entity.Property(e => e.Description).HasColumnType("TEXT (10000)");
-
                 entity.Property(e => e.Email).HasColumnType("TEXT (100)");
-
                 entity.Property(e => e.FullPriceAmount)
-                    .HasColumnType("NUMERIC")
+                    .IsRequired()
                     .HasColumnName("FullPrice_Amount")
+                    .HasColumnType("NUMERIC")
                     .HasDefaultValueSql("0");
-
                 entity.Property(e => e.FullPriceCurrency)
-                    .HasColumnType("TEXT (3)")
+                    .IsRequired()
                     .HasColumnName("FullPrice_Currency")
+                    .HasColumnType("TEXT (3)")
                     .HasDefaultValueSql("'EUR'");
-
                 entity.Property(e => e.ImagePath).HasColumnType("TEXT (100)");
-
-                entity.Property(e => e.Title).HasColumnType("TEXT (100)");
-                */
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasColumnType("TEXT (100)");
+                    */
                 #endregion
             });
 
             modelBuilder.Entity<Lesson>(entity =>
             {
-                entity.ToTable("Lessons");
-                
-                entity.HasOne(lesson => lesson.Course)
-                      .WithMany(course => course.Lessons);
+                entity.Property(lesson => lesson.RowVersion).IsRowVersion();
+                entity.Property(lesson => lesson.Order).HasDefaultValue(1000).ValueGeneratedNever();
 
                 #region Mapping generato automaticamente dal tool di reverse engineering
                 /*
-                entity.Property(e => e.Description).HasColumnType("TEXT (1000)");
-
+                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Description).HasColumnType("TEXT (10000)");
                 entity.Property(e => e.Duration)
+                    .IsRequired()
                     .HasColumnType("TEXT (8)")
-                    .HasDefaultValueSql("'00:00:00:'");
-
-                entity.Property(e => e.Title).HasColumnType("TEXT (100)");
-
+                    .HasDefaultValueSql("'00:00:00'");
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasColumnType("TEXT (100)");
                 entity.HasOne(d => d.Course)
                     .WithMany(p => p.Lessons)
                     .HasForeignKey(d => d.CourseId);
                 */
                 #endregion
             });
-
-            OnModelCreatingPartial(modelBuilder);
         }
-
-        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }

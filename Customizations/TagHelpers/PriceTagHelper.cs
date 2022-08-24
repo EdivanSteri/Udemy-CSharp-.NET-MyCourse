@@ -7,7 +7,6 @@ namespace MyCourse.Customizations.TagHelpers
     {
         public Money CurrentPrice { get; set; }
         public Money FullPrice { get; set; }
-
         public override void Process(TagHelperContext context, TagHelperOutput output)
         {
             output.TagName = "span";

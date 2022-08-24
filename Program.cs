@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using MyCourse.Customizations.ModelBinders;
 using MyCourse.Models.Options;
-using MyCourse.Models.Services.Application;
+using MyCourse.Models.Services.Application.Courses;
+using MyCourse.Models.Services.Application.Lessons;
 using MyCourse.Models.Services.Infrastructure;
-
-
+using static MyCourse.Models.Services.Application.Lessons.MemoryCachedLessonService;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -25,11 +26,16 @@ builder.Services.AddMvc(options => {
     builderConfiguration.Bind("ResponseCache:Home", homeProfile);
     options.CacheProfiles.Add("Home", homeProfile);
 
+    options.ModelBinderProviders.Insert(0, new DecimalModelBinderProvider());
+
 });
 //builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
 builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
-builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
+//builder.Services.AddTransient<ILessonService, AdoNetLessonService>();
+builder.Services.AddTransient<ILessonService, EfCoreLessonService>();
+//builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
+builder.Services.AddTransient<ICachedLessonService, MemoryCacheLessonService>();
 builder.Services.AddSingleton<IImagePersister, MagickNetImagePersister>();
 
 //builder.Services.AddScoped<MyCourseDbContext>();
@@ -56,7 +62,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 { 
     app.UseDeveloperExceptionPage();
-}else{
+}
+else{
     app.UseExceptionHandler("/Error");
 }
 
@@ -75,6 +82,7 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     DefaultRequestCulture = new RequestCulture(appCulture),
     SupportedCultures = new[] { appCulture }
 });*/
+
 
 app.UseRouting();
 

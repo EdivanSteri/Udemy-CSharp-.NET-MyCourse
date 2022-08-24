@@ -12,5 +12,6 @@ namespace MyCourse.Customizations.ModelBinders
             }
             return null;
         }
+
     }
 }

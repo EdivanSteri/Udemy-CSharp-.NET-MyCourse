@@ -1,7 +1,7 @@
 ﻿using MyCourse.Models.InputModels.Courses;
-using MyCourse.Models.ViewModels;
+using MyCourse.Models.ViewModels.Courses;
 
-namespace MyCourse.Models.Services.Application
+namespace MyCourse.Models.Services.Application.Courses
 {
     public interface ICachedCourseService : ICourseService
     {

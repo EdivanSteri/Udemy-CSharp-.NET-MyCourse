@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Razor.TagHelpers;
 
 namespace MyCourse.Customizations.TagHelpers
 {
+ 
+    [HtmlTargetElement(Attributes = "html-sanitize")]
     public class HtmlSanitizeTagHelper : TagHelper
     {
         public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
@@ -12,7 +14,7 @@ namespace MyCourse.Customizations.TagHelpers
             TagHelperContent tagHelperContent = await output.GetChildContentAsync(NullHtmlEncoder.Default);
             string content = tagHelperContent.GetContent(NullHtmlEncoder.Default);
 
-            var sanitizer = new HtmlSanitizer();
+            var sanitizer = CreateSanitizer();
             content = sanitizer.Sanitize(content);
 
             //Reimpostiamo il contenuto del tag
@@ -21,7 +23,7 @@ namespace MyCourse.Customizations.TagHelpers
 
         private static HtmlSanitizer CreateSanitizer()
         {
-            HtmlSanitizer sanitizer = new();
+            var sanitizer = new HtmlSanitizer();
 
             //Tag consentiti
             sanitizer.AllowedTags.Clear();

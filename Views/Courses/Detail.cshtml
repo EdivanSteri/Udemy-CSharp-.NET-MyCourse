@@ -2,17 +2,15 @@
 <section class="course-info">
     <div class="row">
         <div class="col-md-9">
-            <h1>@Model.Title
-                <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@Model.Id"><i class="fas fa-pencil-alt"></i> Modifica</a>
-            </h1>
+            <h1>@Model.Title <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@Model.Id"><i class="fas fa-pencil-alt"></i> Modifica</a></h1>
         </div>
         <div class="col-md-3 d-flex align-items-end">
-            <a class="btn btn-warning btn-lg btn-block subscribe-course" asp-action="Pay" asp-route-id="@Model.Id">Iscriviti</a>
+            <a href="#" class="btn btn-warning btn-lg btn-block subscribe-course">Iscriviti</a>
         </div>
     </div>
     <div class="row">
-        <div class="col-md-9">
-            <p html-sanitize>@Model.Description</p>
+        <div class="col-md-9" html-sanitize>
+            @Model.Description
         </div>
         <div class="col-md-3">
             <aside>
@@ -30,15 +28,13 @@
 </section>
 
 <section class="course-lessons">
-    <h2>Lezioni (@Model.Lesson.Count)
-        <a class="btn btn-outline-primary btn-sm" asp-controller="Lessons" asp-action="Create" asp-route-id="@Model.Id"><i class="fas fa-plus"></i> Crea nuova</a>
-    </h2>
-    @foreach (var lesson in Model.Lesson)
+    <h2>Lezioni (@Model.Lessons.Count) <a class="btn btn-outline-primary btn-sm" asp-controller="Lessons" asp-action="Create" asp-route-id="@Model.Id"><i class="fas fa-plus"></i> Crea nuova</a></h2>
+    @foreach (var lesson in Model.Lessons)
     {
         <hr>
         <div class="row">
             <div class="col-md-9 d-flex align-items-center">
-                <span>@lesson.Title</span>
+                <a asp-controller="Lessons" asp-action="Detail" asp-route-id="@lesson.Id">@lesson.Title</a>
             </div>
             <div class="col-md-3 d-flex align-items-center justify-content-end lesson-duration">
                 <i class="far fa-clock"></i><time>@lesson.Duration.ToString("m'm 's's'")</time>
@@ -52,15 +48,7 @@
             Totale
         </div>
         <div class="col-md-3 d-flex align-items-center justify-content-end">
-            <i class="far fa-clock"></i><time>@Model.TotalDuration.ToString("h'h 'm'm 's's'")</time>
+            <i class="far fa-clock"></i><time>@Model.TotalCourseDuration.ToString("h'h 'm'm 's's'")</time>
         </div>
     </div>
 </section>
-@section Scripts
-    {
-    <script>
-      $('#voteModal').on('shown.bs.modal', function(event) {
-          $(this).find('iframe').attr('src', event.relatedTarget.href);
-      });
-    </script>
-}
