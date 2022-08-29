@@ -1,0 +1,30 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using MyCourse.Models.Entities
+@inject SignInManager<ApplicationUser> signInManager
+@inject UserManager<ApplicationUser> userManager
+@{
+    //ApplicationUser applicationUser = await userManager.GetUserAsync(User);
+}
+
+@if(signInManager.IsSignedIn(User)){
+    <ul class="navbar-nav"> 
+        <li class="nav-item active">
+            <a class="nav-link" asp-page="/Account/Manage/Index" asp-area="Identity">Ciao @User.FindFirst("FullName").Value!</a>
+        </li>
+       
+        <li class="nav-item ">
+            <form class="formo-inline" method="post" asp-page="/Account/Logout" asp-area="Identity">
+                    <button type="submit" class="btn btn-link text-white"  >Esci</button>
+            </form> 
+        </li>
+    </ul>
+}else{
+    <ul class="navbar-nav"> 
+        <li class="nav-item active">
+            <a class="nav-link" asp-page="/Account/Register" asp-area="Identity">Registrati</a>
+        </li>
+        <li class="nav-item ">
+            <a class="nav-link"  asp-page="/Account/Login" asp-area="Identity">Accedi</a>
+        </li>
+    </ul>
+}

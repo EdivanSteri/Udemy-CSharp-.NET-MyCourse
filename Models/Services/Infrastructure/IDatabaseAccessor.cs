@@ -4,8 +4,8 @@ namespace MyCourse.Models.Services.Infrastructure
 {
     public interface IDatabaseAccessor
     {
-        Task<int> CommandAsync(FormattableString formattableCommand);
-        Task<DataSet> QueryAsync(FormattableString formattableScalarQuery);
-        Task<T> QueryScalarAsync<T>(FormattableString formattableQuery);
+        Task<DataSet> QueryAsync(FormattableString formattableQuery, CancellationToken token = default(CancellationToken));
+        Task<T> QueryScalarAsync<T>(FormattableString formattableQuery, CancellationToken token = default(CancellationToken));
+        Task<int> CommandAsync(FormattableString formattableCommand, CancellationToken token = default(CancellationToken));
     }
 }

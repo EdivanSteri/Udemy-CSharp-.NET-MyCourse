@@ -1,4 +1,5 @@
 using System.Data;
+using System.Security.Claims;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,12 +19,14 @@ namespace MyCourse.Models.Services.Application.Courses
         private readonly ILogger<EfCoreCourseService> logger;
         private readonly MyCourseDbContext dbContext;
         private readonly IOptionsMonitor<CoursesOptions> coursesOptions;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IImagePersister imagePersister;
 
-        public EfCoreCourseService(ILogger<EfCoreCourseService> logger, IImagePersister imagePersister, MyCourseDbContext dbContext, IOptionsMonitor<CoursesOptions> coursesOptions)
+        public EfCoreCourseService(ILogger<EfCoreCourseService> logger, IImagePersister imagePersister, MyCourseDbContext dbContext, IOptionsMonitor<CoursesOptions> coursesOptions, IHttpContextAccessor httpContextAccessor)
         {
             this.imagePersister = imagePersister;
             this.coursesOptions = coursesOptions;
+            this.httpContextAccessor = httpContextAccessor;
             this.logger = logger;
             this.dbContext = dbContext;
         }
@@ -115,9 +118,10 @@ namespace MyCourse.Models.Services.Application.Courses
         public async Task<CourseDetailViewModel> CreateCourseAsync(CourseCreateInputModel inputModel)
         {
             string title = inputModel.Title;
-            string author = "Mario Rossi";
+            string author = httpContextAccessor.HttpContext.User.FindFirst("FullName").Value;
+            string authorId = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-            var course = new Course(title, author);
+            var course = new Course(title, author, authorId);
             dbContext.Add(course);
             try
             {
