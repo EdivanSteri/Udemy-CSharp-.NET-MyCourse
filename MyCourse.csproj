@@ -12,6 +12,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Data\Test123.db" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.ReCaptcha" Version="1.5.4" />
     <PackageReference Include="HtmlSanitizer" Version="7.1.542" />
     <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="7.15.4" />
     <PackageReference Include="MailKit" Version="3.3.0" />

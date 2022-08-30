@@ -1,8 +1,18 @@
 @model CourseDetailViewModel
+@inject IAuthorizationService authService
+@{
+    AuthorizationResult courseAuthorResult = await authService.AuthorizeAsync(User, nameof(Policy.CourseAuthor));
+    bool canEdit = courseAuthorResult.Succeeded;
+}
 <section class="course-info">
     <div class="row">
         <div class="col-md-9">
-            <h1>@Model.Title <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@Model.Id"><i class="fas fa-pencil-alt"></i> Modifica</a></h1>
+            <h1>@Model.Title
+                @if (canEdit)
+                {
+                    <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@Model.Id"><i class="fas fa-pencil-alt"></i> Modifica</a>
+                }
+            </h1>
         </div>
         <div class="col-md-3 d-flex align-items-end">
             <a href="#" class="btn btn-warning btn-lg btn-block subscribe-course">Iscriviti</a>
@@ -22,13 +32,19 @@
                     <price current-price="@Model.CurrentPrice" full-price="@Model.FullPrice"></price>
                 </div>
                 <img src="@Model.ImagePath" class="img-fluid course-image" alt="@Model.Title" asp-append-version="true">
+                <a asp-page="/Contact" asp-route-id="@Model.Id" class="btn btn-block btn-outline-secondary mt-3">Fai una domanda</a>
             </aside>
         </div>
     </div>
 </section>
 
 <section class="course-lessons">
-    <h2>Lezioni (@Model.Lessons.Count) <a class="btn btn-outline-primary btn-sm" asp-controller="Lessons" asp-action="Create" asp-route-id="@Model.Id"><i class="fas fa-plus"></i> Crea nuova</a></h2>
+    <h2>Lezioni (@Model.Lessons.Count)
+        @if (canEdit)
+        {
+                <a class="btn btn-outline-primary btn-sm" asp-controller="Lessons" asp-action="Create" asp-route-id="@Model.Id"><i class="fas fa-plus"></i> Crea nuova</a>
+        }
+    </h2>
     @foreach (var lesson in Model.Lessons)
     {
         <hr>
@@ -38,7 +54,10 @@
             </div>
             <div class="col-md-3 d-flex align-items-center justify-content-end lesson-duration">
                 <i class="far fa-clock"></i><time>@lesson.Duration.ToString("m'm 's's'")</time>
-                <a class="btn btn-outline-primary btn-sm ml-3" asp-controller="Lessons" asp-action="Edit" asp-route-id="@lesson.Id"><i class="fas fa-pencil-alt"></i></a>
+                @if (canEdit)
+                {
+                    <a class="btn btn-outline-primary btn-sm ml-3" asp-controller="Lessons" asp-action="Edit" asp-route-id="@lesson.Id"><i class="fas fa-pencil-alt"></i></a>
+                }
             </div>
         </div>
     }

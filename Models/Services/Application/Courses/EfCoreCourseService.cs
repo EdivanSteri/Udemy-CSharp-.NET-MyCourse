@@ -1,5 +1,7 @@
 using System.Data;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
+using Ganss.XSS;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -19,17 +21,20 @@ namespace MyCourse.Models.Services.Application.Courses
         private readonly ILogger<EfCoreCourseService> logger;
         private readonly MyCourseDbContext dbContext;
         private readonly IOptionsMonitor<CoursesOptions> coursesOptions;
-        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IImagePersister imagePersister;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IEmailClient emailClient;
 
-        public EfCoreCourseService(ILogger<EfCoreCourseService> logger, IImagePersister imagePersister, MyCourseDbContext dbContext, IOptionsMonitor<CoursesOptions> coursesOptions, IHttpContextAccessor httpContextAccessor)
+        public EfCoreCourseService(IHttpContextAccessor httpContextAccessor, ILogger<EfCoreCourseService> logger, IEmailClient emailClient, IImagePersister imagePersister, MyCourseDbContext dbContext, IOptionsMonitor<CoursesOptions> coursesOptions)
         {
+            this.httpContextAccessor = httpContextAccessor;
             this.imagePersister = imagePersister;
             this.coursesOptions = coursesOptions;
-            this.httpContextAccessor = httpContextAccessor;
             this.logger = logger;
             this.dbContext = dbContext;
+            this.emailClient = emailClient;
         }
+
         public async Task<CourseDetailViewModel> GetCourseAsync(int id)
         {
             IQueryable<CourseDetailViewModel> queryLinq = dbContext.Courses
@@ -52,9 +57,10 @@ namespace MyCourse.Models.Services.Application.Courses
 
             return viewModel;
         }
+
         public async Task<List<CourseViewModel>> GetBestRatingCoursesAsync()
         {
-            CourseListInputModel inputModel = new CourseListInputModel(
+            CourseListInputModel inputModel = new(
                 search: "",
                 page: 1,
                 orderby: "Rating",
@@ -65,9 +71,10 @@ namespace MyCourse.Models.Services.Application.Courses
             ListViewModel<CourseViewModel> result = await GetCoursesAsync(inputModel);
             return result.Results;
         }
+
         public async Task<List<CourseViewModel>> GetMostRecentCoursesAsync()
         {
-            CourseListInputModel inputModel = new CourseListInputModel(
+            CourseListInputModel inputModel = new(
                 search: "",
                 page: 1,
                 orderby: "Id",
@@ -78,6 +85,7 @@ namespace MyCourse.Models.Services.Application.Courses
             ListViewModel<CourseViewModel> result = await GetCoursesAsync(inputModel);
             return result.Results;
         }
+
         public async Task<ListViewModel<CourseViewModel>> GetCoursesAsync(CourseListInputModel model)
         {
             IQueryable<Course> baseQuery = dbContext.Courses;
@@ -107,7 +115,7 @@ namespace MyCourse.Models.Services.Application.Courses
 
             int totalCount = await queryLinq.CountAsync();
 
-            ListViewModel<CourseViewModel> result = new ListViewModel<CourseViewModel>
+            ListViewModel<CourseViewModel> result = new()
             {
                 Results = courses,
                 TotalCount = totalCount
@@ -115,13 +123,24 @@ namespace MyCourse.Models.Services.Application.Courses
 
             return result;
         }
+
         public async Task<CourseDetailViewModel> CreateCourseAsync(CourseCreateInputModel inputModel)
         {
             string title = inputModel.Title;
-            string author = httpContextAccessor.HttpContext.User.FindFirst("FullName").Value;
-            string authorId = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            string author;
+            string authorId;
 
-            var course = new Course(title, author, authorId);
+            try
+            {
+                author = httpContextAccessor.HttpContext.User.FindFirst("FullName").Value;
+                authorId = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            }
+            catch (NullReferenceException)
+            {
+                throw new UserUnknownException();
+            }
+
+            Course course = new(title, author, authorId);
             dbContext.Add(course);
             try
             {
@@ -134,6 +153,7 @@ namespace MyCourse.Models.Services.Application.Courses
 
             return CourseDetailViewModel.FromEntity(course);
         }
+
         public async Task<CourseDetailViewModel> EditCourseAsync(CourseEditInputModel inputModel)
         {
             Course course = await dbContext.Courses.FindAsync(inputModel.Id);
@@ -180,6 +200,7 @@ namespace MyCourse.Models.Services.Application.Courses
 
             return CourseDetailViewModel.FromEntity(course);
         }
+
         public async Task<bool> IsTitleAvailableAsync(string title, int id)
         {
             //await dbContext.Courses.AnyAsync(course => course.Title == title);
@@ -216,6 +237,72 @@ namespace MyCourse.Models.Services.Application.Courses
 
             course.ChangeStatus(CourseStatus.Deleted);
             await dbContext.SaveChangesAsync();
+        }
+
+        public async Task SendQuestionToCourseAuthorAsync(int courseId, string question)
+        {
+            // Sanitizzo l'input dell'utente
+            question = new HtmlSanitizer(allowedTags: new string[0]).Sanitize(question);
+
+            // Recupero le informazioni del corso
+            Course course = await dbContext.Courses.FindAsync(courseId);
+
+            if (course == null)
+            {
+                logger.LogWarning("Course {id} not found", courseId);
+                throw new CourseNotFoundException(courseId);
+            }
+
+            string courseTitle = course.Title;
+            string courseEmail = course.Email;
+
+            // Recupero le informazioni dell'utente che vuole inviare la domanda
+            string userFullName;
+            string userEmail;
+
+            try
+            {
+                userFullName = httpContextAccessor.HttpContext.User.FindFirst("FullName").Value;
+                userEmail = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Email).Value;
+            }
+            catch (NullReferenceException)
+            {
+                throw new UserUnknownException();
+            }
+
+            // Sanitizzo la domanda dell'utente
+            question = new HtmlSanitizer(allowedTags: new string[0]).Sanitize(question);
+
+            // Compongo il testo della domanda
+            string subject = $@"Domanda per il tuo corso ""{courseTitle}""";
+            string message = $@"<p>L'utente {userFullName} (<a href=""{userEmail}"">{userEmail}</a>)
+                                ti ha inviato la seguente domanda per il tuo corso ""{courseTitle}"".</p>
+                                <p>{question}</p>";
+
+            // Invio la domanda
+            try
+            {
+                await emailClient.SendEmailAsync(courseEmail, userEmail, subject, message);
+            }
+            catch
+            {
+                throw new SendException();
+            }
+        }
+
+        public Task<string> GetCourseAuthorIdAsync(int courseId)
+        {
+            return dbContext.Courses
+                            .Where(course => course.Id == courseId)
+                            .Select(course => course.AuthorId)
+                            .FirstOrDefaultAsync();
+        }
+
+        public Task<int> GetCourseCountByAuthorIdAsync(string authorId)
+        {
+            return dbContext.Courses
+                            .Where(course => course.AuthorId == authorId)
+                            .CountAsync();
         }
     }
 
