@@ -30,10 +30,10 @@ namespace MyCourse.Models.Entities
         public string RowVersion { get; private set; }
         public CourseStatus Status { get; private set; }
         public string AuthorId { get; set; }
-
         public virtual ApplicationUser AuthorUser   { get; set; }
+        public virtual ICollection<ApplicationUser> SubscribedUsers { get; set; }
 
-        
+
         public void ChangeStatus(CourseStatus status)
         {
             //TODO: logica di validazione

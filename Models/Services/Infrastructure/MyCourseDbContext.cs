@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 using MyCourse.Models.Entities;
 using MyCourse.Models.Enums;
 
@@ -17,6 +14,7 @@ namespace MyCourse.Models.Services.Infrastructure
 
         public virtual DbSet<Course> Courses { get; set; }
         public virtual DbSet<Lesson> Lessons { get; set; }
+        public virtual DbSet<Subscription> Subscriptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,10 +52,27 @@ namespace MyCourse.Models.Services.Infrastructure
                       .WithMany(user => user.AuthoredCourses)
                       .HasForeignKey(course => course.AuthorId);
 
-
                 entity.HasMany(course => course.Lessons)
                       .WithOne(lesson => lesson.Course)
                       .HasForeignKey(lesson => lesson.CourseId); //Superflua se la proprietà si chiama CourseId
+
+                entity.HasMany(course => course.SubscribedUsers)
+                      .WithMany(user => user.SubscribedCourses)
+                      .UsingEntity<Subscription>(
+                            entity => entity.HasOne(subscription => subscription.User).WithMany().HasForeignKey(courseStudent => courseStudent.UserId),
+                            entity => entity.HasOne(subscription => subscription.Course).WithMany().HasForeignKey(courseStudent => courseStudent.CourseId),
+                            entity =>
+                            {
+                                entity.ToTable("Subscriptions");
+                                entity.OwnsOne(subscription => subscription.Paid, builder =>
+                                {
+                                    builder.Property(money => money.Currency)
+                                           .HasConversion<string>();
+                                    builder.Property(money => money.Amount)
+                                           .HasConversion<float>();
+                                });
+                            }
+                );
 
                 //Global Query Filter
                 entity.HasQueryFilter(course => course.Status != CourseStatus.Deleted);

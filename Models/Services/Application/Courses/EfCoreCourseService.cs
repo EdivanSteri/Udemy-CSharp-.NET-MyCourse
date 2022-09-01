@@ -1,10 +1,10 @@
 using System.Data;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 using Ganss.XSS;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using MyCourse.Controllers;
 using MyCourse.Models.Entities;
 using MyCourse.Models.Enums;
 using MyCourse.Models.Exceptions;
@@ -20,18 +20,32 @@ namespace MyCourse.Models.Services.Application.Courses
     {
         private readonly ILogger<EfCoreCourseService> logger;
         private readonly MyCourseDbContext dbContext;
+        private readonly LinkGenerator linkGenerator;
+        private readonly ITransactionLogger transactionLogger;
         private readonly IOptionsMonitor<CoursesOptions> coursesOptions;
         private readonly IImagePersister imagePersister;
+        private readonly IPaymentGateway paymentGateway;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IEmailClient emailClient;
 
-        public EfCoreCourseService(IHttpContextAccessor httpContextAccessor, ILogger<EfCoreCourseService> logger, IEmailClient emailClient, IImagePersister imagePersister, MyCourseDbContext dbContext, IOptionsMonitor<CoursesOptions> coursesOptions)
+        public EfCoreCourseService(IHttpContextAccessor httpContextAccessor,
+                                   ILogger<EfCoreCourseService> logger,
+                                   IEmailClient emailClient,
+                                   IImagePersister imagePersister,
+                                   IPaymentGateway paymentGateway,
+                                   MyCourseDbContext dbContext,
+                                   LinkGenerator linkGenerator,
+                                   ITransactionLogger transactionLogger,
+                                   IOptionsMonitor<CoursesOptions> coursesOptions)
         {
             this.httpContextAccessor = httpContextAccessor;
             this.imagePersister = imagePersister;
+            this.paymentGateway = paymentGateway;
             this.coursesOptions = coursesOptions;
             this.logger = logger;
             this.dbContext = dbContext;
+            this.linkGenerator = linkGenerator;
+            this.transactionLogger = transactionLogger;
             this.emailClient = emailClient;
         }
 
@@ -303,6 +317,95 @@ namespace MyCourse.Models.Services.Application.Courses
             return dbContext.Courses
                             .Where(course => course.AuthorId == authorId)
                             .CountAsync();
+        }
+
+        public async Task SubscribeCourseAsync(CourseSubscribeInputModel inputModel)
+        {
+            Subscription subscription = new(inputModel.UserId, inputModel.CourseId)
+            {
+                PaymentDate = inputModel.PaymentDate,
+                PaymentType = inputModel.PaymentType,
+                Paid = inputModel.Paid,
+                TransactionId = inputModel.TransactionId
+            };
+
+            dbContext.Subscriptions.Add(subscription);
+            try
+            {
+                await dbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                throw new CourseSubscriptionException(inputModel.CourseId);
+            }
+            catch (Exception)
+            {
+                await transactionLogger.LogTransactionAsync(inputModel);
+            }
+        }
+
+        public Task<bool> IsCourseSubscribedAsync(int courseId, string userId)
+        {
+            return dbContext.Subscriptions.Where(subscription => subscription.CourseId == courseId && subscription.UserId == userId).AnyAsync();
+        }
+
+        public async Task<string> GetPaymentUrlAsync(int courseId)
+        {
+            CourseDetailViewModel viewModel = await GetCourseAsync(courseId);
+
+            CoursePayInputModel inputModel = new()
+            {
+                CourseId = courseId,
+                UserId = httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier),
+                Description = viewModel.Title,
+                Price = viewModel.CurrentPrice,
+                ReturnUrl = linkGenerator.GetUriByAction(httpContextAccessor.HttpContext,
+                                          action: nameof(CoursesController.Subscribe),
+                                          controller: "Courses",
+                                          values: new { id = courseId }),
+                CancelUrl = linkGenerator.GetUriByAction(httpContextAccessor.HttpContext,
+                                          action: nameof(CoursesController.Detail),
+                                          controller: "Courses",
+                                          values: new { id = courseId })
+            };
+
+            return await paymentGateway.GetPaymentUrlAsync(inputModel);
+        }
+
+        public Task<CourseSubscribeInputModel> CapturePaymentAsync(int courseId, string token)
+        {
+            return paymentGateway.CapturePaymentAsync(token);
+        }
+
+        public async Task<int?> GetCourseVoteAsync(int courseId)
+        {
+            string userId = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            Subscription subscription = await dbContext.Subscriptions.SingleOrDefaultAsync(subscription => subscription.CourseId == courseId && subscription.UserId == userId);
+            if (subscription == null)
+            {
+                throw new CourseSubscriptionNotFoundException(courseId);
+            }
+
+            return subscription.Vote;
+        }
+
+        
+        public async Task VoteCourseAsync(CourseVoteInputModel inputModel)
+        {
+            if (inputModel.Vote < 1 || inputModel.Vote > 5)
+            {
+                throw new InvalidVoteException(inputModel.Vote);
+            }
+
+            string userId = httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            Subscription subscription = await dbContext.Subscriptions.SingleOrDefaultAsync(subscription => subscription.CourseId == inputModel.Id && subscription.UserId == userId);
+            if (subscription == null)
+            {
+                throw new CourseSubscriptionNotFoundException(inputModel.Id);
+            }
+
+            subscription.Vote = inputModel.Vote;
+            await dbContext.SaveChangesAsync();
         }
     }
 

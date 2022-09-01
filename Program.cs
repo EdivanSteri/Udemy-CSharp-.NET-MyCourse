@@ -1,6 +1,5 @@
 using AspNetCore.ReCaptcha;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -15,12 +14,16 @@ using MyCourse.Models.Options;
 using MyCourse.Models.Services.Application.Courses;
 using MyCourse.Models.Services.Application.Lessons;
 using MyCourse.Models.Services.Infrastructure;
+using Stripe;
 using static MyCourse.Models.Services.Application.Lessons.MemoryCachedLessonService;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 var builderConfiguration = builder.Configuration;
 
+// Servizi di pagamento: Paypal o Stripe?
+builder.Services.AddTransient<IPaymentGateway, PaypalPaymentGateway>();
+// builder.Services.AddTransient<IPaymentGateway, StripePaymentGateway>();
 
 builder.Services.AddReCaptcha(builderConfiguration.GetSection("ReCaptcha"));
 builder.Services.AddResponseCaching();
@@ -73,32 +76,36 @@ var identityBuilder = builder.Services.AddDefaultIdentity<ApplicationUser>(optio
 
 //Usiamo ADO.NET o Entity Framework Core per l'accesso ai dati?
 var persistence = Persistence.EfCore;
-switch (persistence)
-{
-case Persistence.AdoNet:
-        builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
-        builder.Services.AddTransient<ILessonService, AdoNetLessonService>();
-        builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
+switch (persistence){
+    case Persistence.AdoNet:
+            builder.Services.AddTransient<ICourseService, AdoNetCourseService>();
+            builder.Services.AddTransient<ILessonService, AdoNetLessonService>();
+            builder.Services.AddTransient<IDatabaseAccessor, SqliteDatabaseAccessor>();
 
-//Imposta l'AdoNetUserStore come servizio di persistenza per Identity
-identityBuilder.AddUserStore<AdoNetUserStore>();
+    //Imposta l'AdoNetUserStore come servizio di persistenza per Identity
+    identityBuilder.AddUserStore<AdoNetUserStore>();
 
-break;
+    break;
 
-case Persistence.EfCore:
+    case Persistence.EfCore:
 
-//Imposta il MyCourseDbContext come servizio di persistenza per Identity
-identityBuilder.AddEntityFrameworkStores<MyCourseDbContext>();
+    //Imposta il MyCourseDbContext come servizio di persistenza per Identity
+    identityBuilder.AddEntityFrameworkStores<MyCourseDbContext>();
 
-    builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
-    builder.Services.AddTransient<ILessonService, EfCoreLessonService>();
+        builder.Services.AddTransient<ICourseService, EfCoreCourseService>();
+        builder.Services.AddTransient<ILessonService, EfCoreLessonService>();
 
-    // Usando AddDbContextPool, il DbContext verrà implicitamente registrato con il ciclo di vita Scoped
-    builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder => {
-    string connectionString = builderConfiguration.GetSection("ConnectionStrings").GetValue<string>("Database");
-    optionsBuilder.UseSqlite(connectionString);
-});
-break;
+        // Usando AddDbContextPool, il DbContext verrà implicitamente registrato con il ciclo di vita Scoped
+        builder.Services.AddDbContextPool<MyCourseDbContext>(optionsBuilder => {
+        string connectionString = builderConfiguration.GetSection("ConnectionStrings").GetValue<string>("Database");
+        optionsBuilder.UseSqlite(connectionString, options =>
+        {
+            // Abilito il connection resiliency (tuttavia non è supportato dal provider di Sqlite perché non è soggetto a errori transienti)
+            // Info su: https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-resiliency
+            // options.EnableRetryOnFailure(3);
+        });
+    });
+    break;
 }
 
 builder.Services.AddTransient<ICachedCourseService, MemoryCacheCourseService>();
@@ -106,11 +113,14 @@ builder.Services.AddTransient<ICachedLessonService, MemoryCacheLessonService>();
 builder.Services.AddSingleton<IImagePersister, MagickNetImagePersister>();
 builder.Services.AddSingleton<IEmailSender, MailKitEmailSender>();
 builder.Services.AddSingleton<IEmailClient, MailKitEmailSender>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, MultiAuthorizationPolicyProvider>();
+builder.Services.AddSingleton<ITransactionLogger, LocalTransactionLogger>();
 
 
 
 builder.Services.AddScoped<IAuthorizationHandler, CourseAuthorRequirementHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, CourseLimitRequirementHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, CourseSubscriberRequirementHandler>();
 
 // Policies
 builder.Services.AddAuthorization(options =>
@@ -120,10 +130,16 @@ builder.Services.AddAuthorization(options =>
         builder.Requirements.Add(new CourseAuthorRequirement());
     });
 
+    options.AddPolicy(nameof(Policy.CourseSubscriber), builder =>
+    {
+        builder.Requirements.Add(new CourseSubscriberRequirement());
+    });
+
     options.AddPolicy(nameof(Policy.CourseLimit), builder =>
     {
         builder.Requirements.Add(new CourseLimitRequirement(limit: 5));
     });
+
 });
 
 
@@ -135,6 +151,8 @@ builder.Services.Configure<MemoryCacheOptions>(builderConfiguration.GetSection("
 builder.Services.Configure<KestrelServerOptions>(builderConfiguration.GetSection("Kestrel"));
 builder.Services.Configure<SmtpOptions>(builderConfiguration.GetSection("Smtp"));
 builder.Services.Configure<UsersOptions>(builderConfiguration.GetSection("Users"));
+builder.Services.Configure<PaypalOptions>(builderConfiguration.GetSection("Paypal"));
+builder.Services.Configure<StripeOptions>(builderConfiguration.GetSection("Stripe"));
 
 
 var app = builder.Build();

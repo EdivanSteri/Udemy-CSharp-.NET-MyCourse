@@ -120,5 +120,35 @@ namespace MyCourse.Models.Services.Application.Courses
                 return courseService.GetCourseCountByAuthorIdAsync(authorId);
             });
         }
+
+        public Task<bool> IsCourseSubscribedAsync(int courseId, string userId)
+        {
+            return courseService.IsCourseSubscribedAsync(courseId, userId);
+        }
+
+        public Task SubscribeCourseAsync(CourseSubscribeInputModel inputModel)
+        {
+            return courseService.SubscribeCourseAsync(inputModel);
+        }
+
+        public Task<string> GetPaymentUrlAsync(int courseId)
+        {
+            return courseService.GetPaymentUrlAsync(courseId);
+        }
+
+        public Task<CourseSubscribeInputModel> CapturePaymentAsync(int courseId, string token)
+        {
+            return courseService.CapturePaymentAsync(courseId, token);
+        }
+
+        public Task<int?> GetCourseVoteAsync(int courseId)
+        {
+            return courseService.GetCourseVoteAsync(courseId);
+        }
+
+        public Task VoteCourseAsync(CourseVoteInputModel inputModel)
+        {
+            return courseService.VoteCourseAsync(inputModel);
+        }
     }
 }

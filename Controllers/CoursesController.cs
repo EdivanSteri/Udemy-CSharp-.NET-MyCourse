@@ -12,7 +12,7 @@ using MyCourse.Models.ViewModels.Courses;
 
 namespace MyCourse.Controllers
 {
-    [Authorize(Roles = nameof(Role.Teacher))]
+
     public class CoursesController : Controller{
             
         private readonly ICourseService courseService;
@@ -44,6 +44,7 @@ namespace MyCourse.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = nameof(Role.Teacher))]
         public IActionResult Create()
         {
             ViewData["Title"] = "Nuovo corso";
@@ -52,6 +53,7 @@ namespace MyCourse.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = nameof(Role.Teacher))]
         public async Task<IActionResult> Create(CourseCreateInputModel inputModel, [FromServices] IAuthorizationService authorizationService, [FromServices] IEmailClient emailClient, [FromServices] IOptionsMonitor<UsersOptions> usersOptions)
         {
             if (ModelState.IsValid)
@@ -83,6 +85,7 @@ namespace MyCourse.Controllers
         }
 
         [Authorize(Policy = nameof(Policy.CourseAuthor))]
+        [Authorize(Roles = nameof(Role.Teacher))]
         public async Task<IActionResult> Edit(int id)
         {
             ViewData["Title"] = "Modifica corso";
@@ -92,6 +95,7 @@ namespace MyCourse.Controllers
 
         [HttpPost]
         [Authorize(Policy = nameof(Policy.CourseAuthor))]
+        [Authorize(Roles = nameof(Role.Teacher))]
         public async Task<IActionResult> Edit(CourseEditInputModel inputModel)
         {
             if (ModelState.IsValid)
@@ -122,6 +126,7 @@ namespace MyCourse.Controllers
 
         [HttpPost]
         [Authorize(Policy = nameof(Policy.CourseAuthor))]
+        [Authorize(Roles = nameof(Role.Teacher))]
         public async Task<IActionResult> Delete(CourseDeleteInputModel inputModel)
         {
             await courseService.DeleteCourseAsync(inputModel);
@@ -135,6 +140,41 @@ namespace MyCourse.Controllers
             return Json(result);
         }
 
-    }  
+        public async Task<IActionResult> Subscribe(int id, string token)
+        {
+            CourseSubscribeInputModel inputModel = await courseService.CapturePaymentAsync(id, token);
+            await courseService.SubscribeCourseAsync(inputModel);
+            TempData["ConfirmationMessage"] = "Grazie per esserti iscritto, guarda subito la prima lezione!";
+            return RedirectToAction(nameof(Detail), new { id = id });
+        }
+
+        public async Task<IActionResult> Pay(int id)
+        {
+            string paymentUrl = await courseService.GetPaymentUrlAsync(id);
+            return Redirect(paymentUrl);
+        }
+
+        [Authorize(Policy = nameof(Policy.CourseSubscriber))]
+        public async Task<IActionResult> Vote(int id)
+        {
+            CourseVoteInputModel inputModel = new()
+            {
+                Id = id,
+                Vote = await courseService.GetCourseVoteAsync(id) ?? 0
+            };
+
+            return View(inputModel);
+        }
+
+        [Authorize(Policy = nameof(Policy.CourseSubscriber))]
+        [HttpPost]
+        public async Task<IActionResult> Vote(CourseVoteInputModel inputModel)
+        {
+            await courseService.VoteCourseAsync(inputModel);
+            TempData["ConfirmationMessage"] = "Grazie per aver votato!";
+            return RedirectToAction(nameof(Detail), new { id = inputModel.Id });
+        }
+
+    }
 
 }

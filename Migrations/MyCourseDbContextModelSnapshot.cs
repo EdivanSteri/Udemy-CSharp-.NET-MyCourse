@@ -307,6 +307,35 @@ namespace MyCourse.Migrations
                     b.ToTable("Lessons");
                 });
 
+            modelBuilder.Entity("MyCourse.Models.Entities.Subscription", b =>
+                {
+                    b.Property<int>("CourseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("PaymentDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PaymentType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TransactionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Vote")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("CourseId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Subscriptions", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -426,6 +455,51 @@ namespace MyCourse.Migrations
                         .IsRequired();
 
                     b.Navigation("Course");
+                });
+
+            modelBuilder.Entity("MyCourse.Models.Entities.Subscription", b =>
+                {
+                    b.HasOne("MyCourse.Models.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyCourse.Models.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("MyCourse.Models.ValueTypes.Money", "Paid", b1 =>
+                        {
+                            b1.Property<int>("SubscriptionCourseId")
+                                .HasColumnType("INTEGER");
+
+                            b1.Property<string>("SubscriptionUserId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<float>("Amount")
+                                .HasColumnType("REAL");
+
+                            b1.Property<string>("Currency")
+                                .IsRequired()
+                                .HasColumnType("TEXT");
+
+                            b1.HasKey("SubscriptionCourseId", "SubscriptionUserId");
+
+                            b1.ToTable("Subscriptions");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SubscriptionCourseId", "SubscriptionUserId");
+                        });
+
+                    b.Navigation("Course");
+
+                    b.Navigation("Paid")
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MyCourse.Models.Entities.ApplicationUser", b =>
