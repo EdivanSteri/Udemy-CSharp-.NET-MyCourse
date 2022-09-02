@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using MyCourse.Customizations.Identity;
@@ -16,6 +17,7 @@ using MyCourse.Models.Services.Application.Lessons;
 using MyCourse.Models.Services.Infrastructure;
 using Stripe;
 using static MyCourse.Models.Services.Application.Lessons.MemoryCachedLessonService;
+using File = System.IO.File;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -160,6 +162,11 @@ var app = builder.Build();
 //if (env.IsDevelopment())
 if (app.Environment.IsDevelopment()){
     app.UseDeveloperExceptionPage();
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        string filePath = Path.Combine(app.Environment.ContentRootPath, "bin/reload.txt");
+        File.WriteAllText(filePath, DateTime.Now.ToString());
+    });
 }
 else{
     // app.UseExceptionHandler("/Error");
@@ -186,15 +193,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseResponseCaching();
 
-//EndpointMiddleware
-app.UseEndpoints(routeBuilder => {
-    routeBuilder.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}").RequireAuthorization();
-    routeBuilder.MapRazorPages().RequireAuthorization();
-});
-
+app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}").RequireAuthorization();
+app.MapRazorPages().RequireAuthorization();
 
 app.Run();
 

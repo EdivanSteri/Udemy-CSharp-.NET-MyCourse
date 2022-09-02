@@ -20,5 +20,6 @@ namespace MyCourse.Models.Entities
 
         public virtual Course Course { get; set; }
         public virtual ApplicationUser User { get; set; }
+
     }
 }

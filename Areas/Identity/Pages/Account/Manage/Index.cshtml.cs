@@ -106,8 +106,15 @@ namespace MyCourse.Areas.Identity.Pages.Account.Manage
             //TODO: PERSISTERE IL FULLNAME
             //Passo1: Recuperare l'istanza di ApplicationUser (in realtà è stato fatto alla riga 94)
             //Passo2: Modificare la sua proprietà FullName ottenendo il valore dall'input model
+            user.FullName = Input.FullName;
             //Passo3: Persistere l'ApplicationUser invocando il metodo UpdateAsync dello user manager 
+            await _userManager.UpdateAsync(user);
             //Passo4: Consultare la proprietà Success dell'IdentityResult perché se è false, visualizza un errore
+            if (IdentityResult.Success.Succeeded == false)
+            {
+                StatusMessage = "Unexpected error when trying to set full number.";
+                return RedirectToPage();
+            }
 
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
             if (Input.PhoneNumber != phoneNumber)

@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Data\Test123.db" />
+	  <none Remove="Data\Test123.db" />
   </ItemGroup>
 
   <ItemGroup>

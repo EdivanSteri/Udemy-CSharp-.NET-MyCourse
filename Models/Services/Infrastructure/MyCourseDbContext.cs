@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyCourse.Models.Entities;
 using MyCourse.Models.Enums;
+using MyCourse.Models.ValueTypes;
 
 namespace MyCourse.Models.Services.Infrastructure
 {
@@ -16,9 +17,19 @@ namespace MyCourse.Models.Services.Infrastructure
         public virtual DbSet<Lesson> Lessons { get; set; }
         public virtual DbSet<Subscription> Subscriptions { get; set; }
 
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            // Pre-convention model configuration goes here
+            configurationBuilder.Properties<Currency>().HaveConversion<string>();
+            configurationBuilder.Properties<decimal>().HaveConversion<float>();
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+
+            //Mapping per gli owned types
+            modelBuilder.Owned<Money>();
 
             modelBuilder.Entity<Course>(entity =>
             {
@@ -29,23 +40,6 @@ namespace MyCourse.Models.Services.Infrastructure
                 entity.HasIndex(course => course.Title).IsUnique();
                 entity.Property(course => course.RowVersion).IsRowVersion();
                 entity.Property(course => course.Status).HasConversion<string>();
-
-                //Mapping per gli owned types
-                entity.OwnsOne(course => course.CurrentPrice, builder => {
-                    builder.Property(money => money.Currency)
-                           .HasConversion<string>()
-                           .HasColumnName("CurrentPrice_Currency"); //Superfluo perché le nostre colonne seguono già la convenzione di nomi
-                    builder.Property(money => money.Amount)
-                           .HasColumnName("CurrentPrice_Amount")//Superfluo perché le nostre colonne seguono già la convenzione di nomi
-                           .HasConversion<float>(); //Questo indica al meccanismo delle migration che la colonna della tabella dovrà essere creata di tipo numerico
-                });
-
-                entity.OwnsOne(course => course.FullPrice, builder => {
-                    builder.Property(money => money.Currency)
-                           .HasConversion<string>();
-                    builder.Property(money => money.Amount)
-                           .HasConversion<float>(); //Questo indica al meccanismo delle migration che la colonna della tabella dovrà essere creata di tipo numerico
-                });
 
                 //Mapping per le relazioni
                 entity.HasOne(course => course.AuthorUser)
@@ -64,13 +58,6 @@ namespace MyCourse.Models.Services.Infrastructure
                             entity =>
                             {
                                 entity.ToTable("Subscriptions");
-                                entity.OwnsOne(subscription => subscription.Paid, builder =>
-                                {
-                                    builder.Property(money => money.Currency)
-                                           .HasConversion<string>();
-                                    builder.Property(money => money.Amount)
-                                           .HasConversion<float>();
-                                });
                             }
                 );
 
