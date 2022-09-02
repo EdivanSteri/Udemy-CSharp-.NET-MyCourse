@@ -26,43 +26,30 @@ namespace MyCourse.Areas.Identity.Pages.Account.Manage
             _signInManager = signInManager;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string Username { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [TempData]
         public string StatusMessage { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
+        public DateTimeOffset EcommerceConsent { get; set; }
+        public DateTimeOffset? NewsletterConsent { get; set; }
+
         public class InputModel
         {
-
-            [Display(Name = "Full Name")]
+            [Required(ErrorMessage = "Il nome completo è obbligatorio")]
+            [StringLength(100, MinimumLength = 3, ErrorMessage = "Il nome completo deve essere di almeno {2} e di al massimo {1} caratteri.")]
+            [Display(Name = "Nome completo")]
             public string FullName { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Phone]
-            [Display(Name = "Phone number")]
+            [Phone(ErrorMessage = "Deve essere un numero di telefono valido")]
+            [Display(Name = "Numero di telefono")]
             public string PhoneNumber { get; set; }
+
+            [Display(Name = "Iscrizione alla newsletter")]
+            public bool NewsletterConsent { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
@@ -70,9 +57,16 @@ namespace MyCourse.Areas.Identity.Pages.Account.Manage
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
+            Username = userName;
+
+            EcommerceConsent = user.EcommerceConsent;
+            NewsletterConsent = user.NewsletterConsent;
+
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                NewsletterConsent = NewsletterConsent is not null,
+                FullName = user.FullName
             };
         }
 
@@ -104,16 +98,37 @@ namespace MyCourse.Areas.Identity.Pages.Account.Manage
             }
 
             //TODO: PERSISTERE IL FULLNAME
-            //Passo1: Recuperare l'istanza di ApplicationUser (in realtà è stato fatto alla riga 94)
-            //Passo2: Modificare la sua proprietà FullName ottenendo il valore dall'input model
-            user.FullName = Input.FullName;
-            //Passo3: Persistere l'ApplicationUser invocando il metodo UpdateAsync dello user manager 
-            await _userManager.UpdateAsync(user);
-            //Passo4: Consultare la proprietà Success dell'IdentityResult perché se è false, visualizza un errore
-            if (IdentityResult.Success.Succeeded == false)
+            if (Input.FullName != null)
             {
-                StatusMessage = "Unexpected error when trying to set full number.";
-                return RedirectToPage();
+                //Passo1: Recuperare l'istanza di ApplicationUser (in realtà è stato fatto alla riga 94)
+                //Passo2: Modificare la sua proprietà FullName ottenendo il valore dall'input model
+                user.FullName = Input.FullName;
+                //Passo3: Persistere l'ApplicationUser invocando il metodo UpdateAsync dello user manager 
+                IdentityResult resul = await _userManager.UpdateAsync(user);
+                //Passo4: Consultare la proprietà Success dell'IdentityResult perché se è false, visualizza un errore
+                if (!resul.Succeeded)
+                {
+                    StatusMessage = "Unexpected error when trying to set Full Name.";
+                    return RedirectToPage();
+                }
+            }
+
+            if (Input.NewsletterConsent)
+            {
+                if (user.NewsletterConsent is null)
+                {
+                    user.NewsletterConsent = DateTimeOffset.Now;
+                    IdentityResult resul = await _userManager.UpdateAsync(user);
+                    if (!resul.Succeeded)
+                    {
+                        StatusMessage = "Unexpected error when trying to set Newsletter Acconsent.";
+                        return RedirectToPage();
+                    }
+                }
+            }
+            else
+            {
+                user.NewsletterConsent = null;
             }
 
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
