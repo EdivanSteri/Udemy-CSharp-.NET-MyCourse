@@ -9,6 +9,8 @@ using MyCourse.Models.Services.Application.Courses;
 using MyCourse.Models.Services.Infrastructure;
 using MyCourse.Models.ViewModels;
 using MyCourse.Models.ViewModels.Courses;
+using Rotativa.AspNetCore.Options;
+using Rotativa.AspNetCore;
 
 namespace MyCourse.Controllers
 {
@@ -173,6 +175,29 @@ namespace MyCourse.Controllers
             await courseService.VoteCourseAsync(inputModel);
             TempData["ConfirmationMessage"] = "Grazie per aver votato!";
             return RedirectToAction(nameof(Detail), new { id = inputModel.Id });
+        }
+
+        [Authorize(Policy = nameof(Policy.CourseSubscriber))]
+        public async Task<IActionResult> Receipt(int id)
+        {
+            CourseSubscriptionViewModel viewModel = await courseService.GetCourseSubscriptionAsync(id);
+            // return View(viewModel);
+
+            ViewAsPdf pdf = new ViewAsPdf
+            {
+                Model = viewModel,
+                ViewName = nameof(Receipt),
+                PageMargins = new Margins { Top = 10, Left = 10, Right = 10, Bottom = 20 },
+                PageSize = Size.A4,
+                PageOrientation = Orientation.Portrait,
+                FileName = $"{viewModel.Title} - ricevuta iscrizione.pdf"
+            };
+
+            byte[] fileContents = await pdf.BuildFile(ControllerContext);
+
+            // Salvare fileContents
+
+            return File(fileContents, "application/pdf", pdf.FileName);
         }
 
     }

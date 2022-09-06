@@ -12,6 +12,7 @@ using MyCourse.Models.ViewModels;
 using MyCourse.Models.ViewModels.Courses;
 using MyCourse.Models.ViewModels.Lessons;
 using MyCourse.Controllers;
+using AutoMapper;
 
 namespace MyCourse.Models.Services.Application.Courses
 {
@@ -26,6 +27,8 @@ namespace MyCourse.Models.Services.Application.Courses
         private readonly IEmailClient emailClient;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly ITransactionLogger transactionLogger;
+        private readonly IMapper mapper;
+
         public AdoNetCourseService(IDatabaseAccessor db,
                                    IPaymentGateway paymentGateway,
                                    IImagePersister imagePersister,
@@ -34,7 +37,7 @@ namespace MyCourse.Models.Services.Application.Courses
                                    IOptionsMonitor<CoursesOptions> coursesOptions,
                                    LinkGenerator linkGenerator,
                                    ILogger<AdoNetCourseService> logger,
-                                   ITransactionLogger transactionLogger)
+                                   ITransactionLogger transactionLogger, IMapper mapper)
         {
             this.db = db;
             this.paymentGateway = paymentGateway;
@@ -45,6 +48,7 @@ namespace MyCourse.Models.Services.Application.Courses
             this.emailClient = emailClient;
             this.httpContextAccessor = httpContextAccessor;
             this.transactionLogger = transactionLogger;
+            this.mapper = mapper;
         }
 
         public async Task<CourseDetailViewModel> GetCourseAsync(int id)
@@ -65,15 +69,20 @@ namespace MyCourse.Models.Services.Application.Courses
             }
             var courseRow = courseTable.Rows[0];
             var courseDetailViewModel = CourseDetailViewModel.FromDataRow(courseRow);
+            /*con l'autoMApper al posto al posto della riga sopra
+            var courseDetailViewModel = mapper.Map<CourseDetailViewModel>(courseRow);
+            */
 
             //Course lessons
             var lessonDataTable = dataSet.Tables[1];
-
             foreach (DataRow lessonRow in lessonDataTable.Rows)
             {
                 LessonViewModel lessonViewModel = LessonViewModel.FromDataRow(lessonRow);
                 courseDetailViewModel.Lessons.Add(lessonViewModel);
             }
+            /*con l'autoMApper al posto del foreach subito sopra
+            courseDetailViewModel.Lessons = mapper.Map<List<LessonViewModel>>(lessonDataTable.Rows);
+            */
             return courseDetailViewModel;
         }
 
@@ -92,6 +101,9 @@ namespace MyCourse.Models.Services.Application.Courses
                 CourseViewModel courseViewModel = CourseViewModel.FromDataRow(courseRow);
                 courseList.Add(courseViewModel);
             }
+            /*con l'autoMApper al posto del foreach subito sopra
+            var courseList = mapper.Map<List<CourseViewModel>>(dataTable.Rows);
+            */
 
             ListViewModel<CourseViewModel> result = new()
             {
@@ -221,6 +233,13 @@ namespace MyCourse.Models.Services.Application.Courses
 
         public async Task DeleteCourseAsync(CourseDeleteInputModel inputModel)
         {
+            int subscribersCount = await db.QueryScalarAsync<int>($"SELECT COUNT(*) FROM Subcriptions WHERE CourseId={inputModel.Id}");
+            if(subscribersCount > 0)
+            {
+                throw new CourseDeletionException(inputModel.Id);
+            }
+
+
             int affectedRows = await this.db.CommandAsync($"UPDATE Courses SET Status={nameof(CourseStatus.Deleted)} WHERE Id={inputModel.Id} AND Status<>{nameof(CourseStatus.Deleted)}");
             if (affectedRows == 0)
             {
@@ -357,5 +376,38 @@ namespace MyCourse.Models.Services.Application.Courses
                 throw new CourseSubscriptionNotFoundException(inputModel.Id);
             }
         }
+
+        public async Task<List<CourseDetailViewModel>> GetCoursesByAuthorAsync(string authorId)
+        {
+            FormattableString query = $@"SELECT Id FROM Courses WHERE AuthorId={authorId} AND Status<>{nameof(CourseStatus.Deleted)}";
+            DataSet dataSet = await db.QueryAsync(query);
+            DataTable dataTable = dataSet.Tables[0];
+            List<CourseDetailViewModel> courseList = new();
+            foreach (DataRow courseRow in dataTable.Rows)
+            {
+                CourseDetailViewModel course = await GetCourseAsync(courseRow.Field<int>("Id"));
+                courseList.Add(course);
+            }
+
+            return courseList;
+        }
+
+        public async Task<CourseSubscriptionViewModel> GetCourseSubscriptionAsync(int courseId)
+        {
+            string userId = GetCurrentUserId();
+            DataSet ds = await db.QueryAsync($"SELECT Title, PaymentDate, PaymentType, Paid_Amount, Paid_Currency, TransactionId FROM Subscriptions INNER JOIN Courses ON Subscriptions.CourseId = Courses.Id WHERE Subscriptions.CourseId={courseId} AND Subscriptions.UserId={userId}");
+            if (ds.Tables[0].Rows.Count == 0)
+            {
+                throw new CourseSubscriptionNotFoundException(courseId);
+            }
+
+            return CourseSubscriptionViewModel.FromDataRow(ds.Tables[0].Rows[0]);
+        }
+
+        private string GetCurrentUserId()
+        {
+            return httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+        }
+
     }
 }

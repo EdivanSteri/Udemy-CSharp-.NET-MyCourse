@@ -242,14 +242,17 @@ namespace MyCourse.Models.Services.Application.Courses
 
         public async Task DeleteCourseAsync(CourseDeleteInputModel inputModel)
         {
-            Course course = await dbContext.Courses.FindAsync(inputModel.Id);
+            Course course = await dbContext.Courses
+                                                  .Include(course => course.SubscribedUsers.Take(1))
+                                                  .Where(course => course.Id == inputModel.Id)
+                                                  .SingleOrDefaultAsync();
 
             if (course == null)
             {
                 throw new CourseNotFoundException(inputModel.Id);
             }
 
-            course.ChangeStatus(CourseStatus.Deleted);
+            course.Delete();
             await dbContext.SaveChangesAsync();
         }
 
@@ -407,6 +410,35 @@ namespace MyCourse.Models.Services.Application.Courses
             subscription.Vote = inputModel.Vote;
             await dbContext.SaveChangesAsync();
         }
+
+        public Task<List<CourseDetailViewModel>> GetCoursesByAuthorAsync(string authorId)
+        {
+            return dbContext.Courses
+                            .AsNoTracking()
+                            .Include(course => course.Lessons)
+                            .Where(course => course.AuthorId == authorId)
+                            .Select(course => CourseDetailViewModel.FromEntity(course))
+                            .ToListAsync();
+        }
+
+        public async Task<CourseSubscriptionViewModel> GetCourseSubscriptionAsync(int courseId)
+        {
+            string userId = GetCurrentUserId();
+            Subscription subscription = await dbContext.Subscriptions.Include(subscription => subscription.Course)
+                                                                     .SingleOrDefaultAsync(subscription => subscription.CourseId == courseId && subscription.UserId == userId);
+            if (subscription == null)
+            {
+                throw new CourseSubscriptionNotFoundException(courseId);
+            }
+
+            return CourseSubscriptionViewModel.FromEntity(subscription);
+        }
+
+        private string GetCurrentUserId()
+        {
+            return httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+        }
+
     }
 
 }

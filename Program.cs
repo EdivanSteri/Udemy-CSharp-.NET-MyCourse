@@ -1,9 +1,10 @@
 using AspNetCore.ReCaptcha;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using MyCourse.Customizations.Identity;
@@ -15,7 +16,10 @@ using MyCourse.Models.Options;
 using MyCourse.Models.Services.Application.Courses;
 using MyCourse.Models.Services.Application.Lessons;
 using MyCourse.Models.Services.Infrastructure;
-using Stripe;
+using MyCourse.Models.Services.Worker;
+using Rotativa.AspNetCore;
+using System.Security.Claims;
+using System.Text.Json;
 using static MyCourse.Models.Services.Application.Lessons.MemoryCachedLessonService;
 using File = System.IO.File;
 
@@ -29,6 +33,46 @@ builder.Services.AddTransient<IPaymentGateway, PaypalPaymentGateway>();
 
 builder.Services.AddReCaptcha(builderConfiguration.GetSection("ReCaptcha"));
 builder.Services.AddResponseCaching();
+
+builder.Services.AddAuthentication().AddFacebook(facebookOptions =>
+{
+    facebookOptions.AppId = builderConfiguration["Authentication:Facebook:AppId"];
+    facebookOptions.AppSecret = builderConfiguration["Authentication:Facebook:AppSecret"];
+
+    facebookOptions.Scope.Add("email");
+    facebookOptions.Scope.Add("user_location");
+
+    facebookOptions.Events = new OAuthEvents
+    {
+        OnCreatingTicket = async context =>
+        {
+            var location = await GetUserLocationFromFacebook(context.AccessToken);
+            var identity = context.Principal.Identity as ClaimsIdentity;
+            identity.AddClaim(new Claim(ClaimTypes.Locality, location));
+        }
+    };
+});
+
+
+async Task<string> GetUserLocationFromFacebook(string accessToken)
+{
+    using var client = new HttpClient();
+    var response = await client.GetAsync($"https://graph.facebook.com/v9.0/me?access_token={accessToken}&fields=location");
+    var body = await response.Content.ReadAsStreamAsync();
+    var document = JsonDocument.Parse(body);
+    return document.RootElement.GetProperty("location").GetString("name");
+}
+
+Task OnTicketReceived(TicketReceivedContext arg)
+{
+    return Task.CompletedTask;
+}
+
+Task OnCreatingTicket(OAuthCreatingTicketContext arg)
+{
+    return Task.CompletedTask;
+}
+
 
 builder.Services.AddMvc(options =>{
     CacheProfile homeProfile = new();
@@ -73,8 +117,10 @@ var identityBuilder = builder.Services.AddDefaultIdentity<ApplicationUser>(optio
 })
   .AddClaimsPrincipalFactory<CustomClaimsPrincipalFactory>()
   .AddPasswordValidator<CommonPasswordValidator<ApplicationUser>>();
-  /*.AddRoles<IdentityRole>()
-  .AddRoleManager<RoleManager<IdentityRole>>();*/
+/*.AddRoles<IdentityRole>()
+.AddRoleManager<RoleManager<IdentityRole>>();*/
+
+//builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 //Usiamo ADO.NET o Entity Framework Core per l'accesso ai dati?
 var persistence = Persistence.EfCore;
@@ -118,8 +164,8 @@ builder.Services.AddSingleton<IEmailClient, MailKitEmailSender>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, MultiAuthorizationPolicyProvider>();
 builder.Services.AddSingleton<ITransactionLogger, LocalTransactionLogger>();
 
-
-
+// Uso il ciclo di vita Scoped per registrare questi AuthorizationHandler perché
+// sfruttano un servizio (il DbContext) registrato con il ciclo di vita Scoped
 builder.Services.AddScoped<IAuthorizationHandler, CourseAuthorRequirementHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, CourseLimitRequirementHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, CourseSubscriberRequirementHandler>();
@@ -144,7 +190,11 @@ builder.Services.AddAuthorization(options =>
 
 });
 
-
+//Hosted Services (workers)
+builder.Services.AddSingleton<UserDataHostedService>();
+builder.Services.AddSingleton<IUserDataService>(provider => provider.GetRequiredService<UserDataHostedService>());
+builder.Services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<UserDataHostedService>());
+builder.Services.AddHostedService<ClearDataHostedService>();
 
 // Options
 builder.Services.Configure<CoursesOptions>(builderConfiguration.GetSection("Courses"));
@@ -157,11 +207,22 @@ builder.Services.Configure<PaypalOptions>(builderConfiguration.GetSection("Paypa
 builder.Services.Configure<StripeOptions>(builderConfiguration.GetSection("Stripe"));
 
 
+
+
+
+
 var app = builder.Build();
+
+
+//Rotativa
+RotativaConfiguration.Setup(app.Environment.ContentRootPath);
 
 //if (env.IsDevelopment())
 if (app.Environment.IsDevelopment()){
-    app.UseDeveloperExceptionPage();
+    
+    // Aggiunta automaticamente da .NET 6
+    // app.UseDeveloperExceptionPage();
+
     app.Lifetime.ApplicationStarted.Register(() =>
     {
         string filePath = Path.Combine(app.Environment.ContentRootPath, "bin/reload.txt");
@@ -193,10 +254,10 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseResponseCaching();
 
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}").RequireAuthorization();
 app.MapRazorPages().RequireAuthorization();
 
 app.Run();
-

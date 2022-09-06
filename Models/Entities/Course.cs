@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MyCourse.Models.Enums;
+using MyCourse.Models.Exceptions;
 using MyCourse.Models.ValueTypes;
 
 namespace MyCourse.Models.Entities
@@ -38,6 +39,14 @@ namespace MyCourse.Models.Entities
         {
             //TODO: logica di validazione
             Status = status;
+        }
+
+        public void Delete()
+        {
+            if (SubscribedUsers.Any())
+            {
+                throw new CourseDeletionException(Id);
+            }
         }
 
         public void ChangeAuthor(string newAuthor, string newAuthorId)

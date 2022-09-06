@@ -18,6 +18,11 @@ namespace MyCourse.Controllers
                     Response.StatusCode = 404;
                     return View("CourseNotFound");
 
+                case CourseDeletionException exc:
+                    ViewData["Title"] = "Impossibile elimanare il corso dato che ha già degli iscritti";
+                    Response.StatusCode = 400;
+                    return View("CoursesDeletionError");
+
                 case CourseSubscriptionException exc:
                     ViewData["Title"] = "Non è stato possibile iscriverti al corso";
                     Response.StatusCode = 400;
